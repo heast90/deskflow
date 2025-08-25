@@ -1,0 +1,119 @@
+From: Pranav P <pranavsdreams@gmail.com>
+Date: Tue, 12 Aug 2025 14:04:40 +0530
+Subject: fix: failures in big endian machines tests
+
+Author: Pranav P <pranav.p7@ibm.com>
+Origin: https://github.com/deskflow/deskflow/pull/8851
+Forwarded: not-needed
+
+
+Signed-off-by: Kentaro Hayashi <kenhys@xdump.org>
+---
+ src/lib/base/CMakeLists.txt                     | 3 +++
+ src/lib/base/Unicode.cpp                        | 8 ++++++--
+ src/unittests/CMakeLists.txt                    | 3 +++
+ src/unittests/base/UnicodeTests.cpp             | 4 ++++
+ src/unittests/deskflow/ClipboardChunksTests.cpp | 8 ++++++--
+ 5 files changed, 22 insertions(+), 4 deletions(-)
+
+diff --git a/src/lib/base/CMakeLists.txt b/src/lib/base/CMakeLists.txt
+index a3dd730..13571c2 100644
+--- a/src/lib/base/CMakeLists.txt
++++ b/src/lib/base/CMakeLists.txt
+@@ -42,3 +42,6 @@ add_library(base STATIC
+ )
+ 
+ target_link_libraries(base PRIVATE arch)
++if (CMAKE_CXX_BYTE_ORDER STREQUAL "BIG_ENDIAN")
++  target_compile_definitions(base PUBLIC WORDS_BIGENDIAN=1)
++endif()
+diff --git a/src/lib/base/Unicode.cpp b/src/lib/base/Unicode.cpp
+index cc6f481..6d293d0 100644
+--- a/src/lib/base/Unicode.cpp
++++ b/src/lib/base/Unicode.cpp
+@@ -439,7 +439,9 @@ std::string Unicode::doUTF16ToUTF8(const uint8_t *data, uint32_t n, bool *errors
+       break;
+     }
+   }
+-
++#ifdef WORDS_BIGENDIAN
++  byteSwapped = !byteSwapped;
++#endif
+   // convert each character
+   while (n > 0) {
+     if (uint32_t c = decode16(data, byteSwapped); c < 0x0000d800 || c > 0x0000dfff) {
+@@ -496,7 +498,9 @@ std::string Unicode::doUTF32ToUTF8(const uint8_t *data, uint32_t n, bool *errors
+       break;
+     }
+   }
+-
++#ifdef WORDS_BIGENDIAN
++  byteSwapped = !byteSwapped;
++#endif
+   // convert each character
+   for (; n > 0; --n) {
+     auto c = decode32(data, byteSwapped);
+diff --git a/src/unittests/CMakeLists.txt b/src/unittests/CMakeLists.txt
+index 43403fa..c5a1a49 100644
+--- a/src/unittests/CMakeLists.txt
++++ b/src/unittests/CMakeLists.txt
+@@ -35,6 +35,9 @@ function(create_test)
+ 
+   add_executable(${m_NAME} ${m_SOURCE})
+   target_link_libraries(${m_NAME} ${m_DEPENDS} ${m_LIBS} Qt::Test)
++  if (CMAKE_CXX_BYTE_ORDER STREQUAL "BIG_ENDIAN")
++    target_compile_definitions(${m_NAME} PUBLIC WORDS_BIGENDIAN=1)
++  endif()
+   add_test(NAME ${m_NAME} COMMAND $<TARGET_FILE:${m_NAME}> WORKING_DIRECTORY ${m_WORKING_DIRECTORY})
+   set_tests_properties(${m_NAME} PROPERTIES DEPENDS ${m_DEPENDS})
+   set_property(GLOBAL APPEND PROPERTY ${CMAKE_PROJECT_NAME}_tests ${m_NAME})
+diff --git a/src/unittests/base/UnicodeTests.cpp b/src/unittests/base/UnicodeTests.cpp
+index fa7bb6f..f6fd6bb 100644
+--- a/src/unittests/base/UnicodeTests.cpp
++++ b/src/unittests/base/UnicodeTests.cpp
+@@ -42,8 +42,12 @@ void UnicodeTests::UCS2ToUTF8_kUCS2()
+   QVERIFY(!errors);
+ #ifdef _WIN32
+   QCOMPARE(result, std::string("hello", 5)); // mixed-platform expected result
++#else
++#ifdef WORDS_BIGENDIAN
++  QCOMPARE(result, std::string("\0h\0e\0", 5)); // mixed-platform expected result
+ #else
+   QCOMPARE(result, std::string("h\0e\0l", 5)); // mixed-platform expected result
++#endif // WORDS_BIGENDIAN
+ #endif // _WIN32
+ }
+ 
+diff --git a/src/unittests/deskflow/ClipboardChunksTests.cpp b/src/unittests/deskflow/ClipboardChunksTests.cpp
+index c8eab3f..7e09cb6 100644
+--- a/src/unittests/deskflow/ClipboardChunksTests.cpp
++++ b/src/unittests/deskflow/ClipboardChunksTests.cpp
+@@ -32,11 +32,13 @@ void ClipboardChunksTests::formatDataChunk()
+ {
+   ClipboardID id = 0;
+   uint32_t sequence = 1;
++  uint32_t temp_m_chunk;
+   std::string mockData("mock data");
+   ClipboardChunk *chunk = ClipboardChunk::data(id, sequence, mockData);
++  memcpy(&temp_m_chunk, &chunk->m_chunk[1], 4);
+ 
+   QCOMPARE(chunk->m_chunk[0], id);
+-  QCOMPARE((uint32_t)chunk->m_chunk[1], sequence);
++  QCOMPARE(temp_m_chunk, sequence);
+   QCOMPARE(chunk->m_chunk[5], ChunkType::DataChunk);
+   QCOMPARE(chunk->m_chunk[6], 'm');
+   QCOMPARE(chunk->m_chunk[7], 'o');
+@@ -56,10 +58,12 @@ void ClipboardChunksTests::endFormatData()
+ {
+   ClipboardID id = 1;
+   uint32_t sequence = 1;
++  uint32_t temp_m_chunk;
+   ClipboardChunk *chunk = ClipboardChunk::end(id, sequence);
++  memcpy(&temp_m_chunk, &chunk->m_chunk[1], 4);
+ 
+   QCOMPARE(chunk->m_chunk[0], id);
+-  QCOMPARE((uint32_t)chunk->m_chunk[1], sequence);
++  QCOMPARE(temp_m_chunk, sequence);
+   QCOMPARE(chunk->m_chunk[5], ChunkType::DataEnd);
+   QCOMPARE(chunk->m_chunk[6], '\0');
+ 

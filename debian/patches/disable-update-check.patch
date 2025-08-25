@@ -1,0 +1,23 @@
+From: Kentaro Hayashi <kenhys@xdump.org>
+Date: Sat, 9 Aug 2025 20:00:58 +0900
+Subject: Always disable update check on startup
+
+Forwarded: not-needed
+Author: Kentaro HAYASHI <kenhys@xdump.org>
+---
+ src/lib/gui/MainWindow.cpp | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/src/lib/gui/MainWindow.cpp b/src/lib/gui/MainWindow.cpp
+index 71b9870..c7509e1 100644
+--- a/src/lib/gui/MainWindow.cpp
++++ b/src/lib/gui/MainWindow.cpp
+@@ -634,6 +634,8 @@ void MainWindow::open()
+   const auto kCriticalDialogDelay = 100;
+   QTimer::singleShot(kCriticalDialogDelay, this, &messages::raiseCriticalDialog);
+ 
++  // Always disable update check on startup
++  Settings::setValue(Settings::Gui::AutoUpdateCheck, false);
+   if (!Settings::value(Settings::Gui::AutoUpdateCheck).isValid()) {
+     Settings::setValue(Settings::Gui::AutoUpdateCheck, messages::showUpdateCheckOption(this));
+   }

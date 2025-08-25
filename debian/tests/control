@@ -1,0 +1,2 @@
+Tests: deskflow-client.sh, deskflow-server.sh
+Depends: @builddeps@, deskflow

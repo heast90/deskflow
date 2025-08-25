@@ -1,0 +1,9 @@
+Version: 5
+
+Source: https://api.github.com/repos/deskflow/deskflow/tags
+Matching-Pattern: https://api.github.com/repos/deskflow/deskflow/tarball/refs/tags/v([\d\.]+)
+Dversionmangle: auto
+Filenamemangle: s/v([\d\.]+)/deskflow-$1.tar.gz/
+Repack: yes
+Repacksuffix: +dfsg
+Searchmode: plain

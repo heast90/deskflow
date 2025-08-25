@@ -1,0 +1,20 @@
+deskflow for Debian
+------------------
+
+ There is already similar package already on Debian - Barrier.
+ But the upstream of Barrier is not actively maintained anymore [1]
+ therefore forked as Input Leap. [2]
+
+ It seems that Input Leap still have significant limitations (no stable
+ builds) so prefer packaging Deskflow which supports Wayland and has
+ kindly configuration wizard feature because it is also upstream of
+ commercial fork of Synergy and we can expect continuous maintenance
+ somewhat.
+
+ Deskflow provides similar UI like Barrier so transition to Deskflow
+ is easy.
+
+ [1] https://github.com/input-leap/input-leap/issues/1414
+ [2] https://github.com/input-leap/input-leap
+
+ -- HAYASHI Kentaro <kenhys@xdump.org>  Sat, 12 Oct 2024 17:45:10 +0900

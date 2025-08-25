@@ -1,4 +1,20 @@
 #!/usr/bin/make -f
 
+#export DH_VERBOSE = 1
+
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+DPKG_EXPORT_BUILDFLAGS = 1
+include /usr/share/dpkg/buildflags.mk
+CFLAGS+=$(CPPFLAGS)
+CXXFLAGS+=$(CPPFLAGS)
+
 %:
-	dh $@
+	dh $@ --buildsystem=cmake
+
+override_dh_auto_install:
+	dh_auto_install
+	mkdir -p $(CURDIR)/debian/deskflow/usr/share/doc/deskflow/
+	mv $(CURDIR)/debian/deskflow/usr/share/licenses/deskflow/* $(CURDIR)/debian/deskflow/usr/share/doc/deskflow/
+	rm -rf $(CURDIR)/debian/deskflow/usr/share/licenses
+	mkdir -p $(CURDIR)/debian/tmp/usr/share/man/man1
+	cp $(CURDIR)/debian/deskflow/usr/share/man/man1/*.1 $(CURDIR)/debian/tmp/usr/share/man/man1/

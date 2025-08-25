@@ -1,5 +1,117 @@
-template-repository (1.0-1) unstable; urgency=medium
+deskflow (1.23.0+dfsg-2) unstable; urgency=medium
 
-  * Initial release
+  * debian/control
+    * Allow s390x (Drop from unsupported-architecture list)
+  * debian/patches/patches/github8851-fix-failure-s390.patch
+    * Apply patch for s390x
+  * debian/watch
+    * Use d/watch 5
 
- -- Tsic404 <liuheng@deepin.org>  Sat, 28 Jan 2023 13:46:49 +0800
+ -- Kentaro Hayashi <kenhys@xdump.org>  Tue, 19 Aug 2025 21:17:08 +0900
+
+deskflow (1.23.0+dfsg-1) unstable; urgency=medium
+
+  * New upstream version 1.23.0+dfsg
+
+ -- Kentaro Hayashi <kenhys@xdump.org>  Sat, 09 Aug 2025 19:57:57 +0900
+
+deskflow (1.22.0+dfsg-7) unstable; urgency=medium
+
+  * debian/control
+    * Drop needless architecture-is-little-endian
+
+ -- Kentaro Hayashi <kenhys@xdump.org>  Wed, 02 Jul 2025 19:01:03 +0900
+
+deskflow (1.22.0+dfsg-6) unstable; urgency=medium
+
+  * debian/control
+    * Use unsupported-architecture explicitly
+
+ -- Kentaro Hayashi <kenhys@xdump.org>  Wed, 02 Jul 2025 13:16:12 +0900
+
+deskflow (1.22.0+dfsg-5) unstable; urgency=medium
+
+  * Drop broken autopkgtest case
+
+ -- Kentaro Hayashi <kenhys@xdump.org>  Tue, 01 Jul 2025 10:10:25 +0900
+
+deskflow (1.22.0+dfsg-4) unstable; urgency=medium
+
+  * debian/tests
+    * Add minimum autopkgtests
+  * debian/rules
+    * Fix P:trailing-whitespace
+
+ -- Kentaro Hayashi <kenhys@xdump.org>  Mon, 30 Jun 2025 18:43:59 +0900
+
+deskflow (1.22.0+dfsg-3) unstable; urgency=medium
+
+  * debian/control
+    * Use architecture-is-little-endian appropriately
+
+ -- Kentaro Hayashi <kenhys@xdump.org>  Mon, 02 Jun 2025 11:05:32 +0900
+
+deskflow (1.22.0+dfsg-2) unstable; urgency=medium
+
+  * debian/patches/omit-little-endian-unittests.patch
+    - Add patch to omit little endian specific tests
+
+ -- Kentaro Hayashi <kenhys@xdump.org>  Sun, 01 Jun 2025 19:36:07 +0900
+
+deskflow (1.22.0+dfsg-1) unstable; urgency=medium
+
+  * New upstream version 1.22.0+dfsg
+  * debian/patches/disable-update-check.patch
+    - Refresh patch for disabling auto update check
+
+ -- Kentaro Hayashi <kenhys@xdump.org>  Sat, 31 May 2025 22:38:00 +0900
+
+deskflow (1.21.2+dfsg-1) unstable; urgency=medium
+
+  * New upstream version 1.21.2+dfsg
+  * debian/control, debian/rules
+    - Let man generation to help2man.
+
+ -- Kentaro Hayashi <kenhys@xdump.org>  Tue, 29 Apr 2025 15:25:46 +0900
+
+deskflow (1.21.1+dfsg-1) unstable; urgency=medium
+
+  * New upstream version 1.21.1+dfsg
+  * d/control,d/rules
+    - Use go-md2man-v2 instead of pandoc
+  * debian/patches/disable-update-check.patch
+    - Refresh patch for v1.21.1
+
+ -- Kentaro Hayashi <kenhys@xdump.org>  Wed, 02 Apr 2025 19:45:42 +0900
+
+deskflow (1.21.0+dfsg-1) unstable; urgency=medium
+
+  * New upstream version 1.21.0+dfsg
+  * debian/patches/disable-update-check.patch
+    - Refresh patch for v1.21.0
+  * debian/control
+    - Bump Standards-Version to 4.7.2. No changes are required.
+
+ -- Kentaro Hayashi <kenhys@xdump.org>  Sat, 29 Mar 2025 22:38:16 +0900
+
+deskflow (1.20.1+dfsg-1) unstable; urgency=medium
+
+  * New upstream version 1.20.1+dfsg
+  * debian/patches/disable-update-check.patch
+    - Refresh patch for v1.20.1
+  * debian/deskflow.lintian-overrides
+    - Drop needless overrides
+
+ -- Kentaro Hayashi <kenhys@xdump.org>  Mon, 17 Mar 2025 20:30:07 +0900
+
+deskflow (1.18.0+dfsg-2) unstable; urgency=medium
+
+  * Source only upload for testing migration
+
+ -- Kentaro Hayashi <kenhys@xdump.org>  Mon, 17 Mar 2025 12:48:38 +0900
+
+deskflow (1.18.0+dfsg-1) unstable; urgency=medium
+
+  * Initial release. (Closes: #1084988)
+
+ -- Kentaro Hayashi <kenhys@xdump.org>  Tue, 28 Jan 2025 21:31:45 +0900

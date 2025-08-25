@@ -1,0 +1,142 @@
+# SPDX-FileCopyrightText: 2024 Deskflow Developers
+# SPDX-FileCopyrightText: 2024 Symless Ltd
+# SPDX-License-Identifier: MIT
+
+set(target gui)
+
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+if(APPLE)
+  set (platform_sources
+    OSXHelpers.h
+    OSXHelpers.mm
+  )
+endif()
+
+add_library(${target} STATIC
+  ${platform_sources}
+  Action.cpp
+  Action.h
+  DataDownloader.cpp
+  DataDownloader.h
+  Diagnostic.cpp
+  Diagnostic.h
+  DotEnv.cpp
+  DotEnv.h
+  FileTail.cpp
+  FileTail.h
+  Hotkey.cpp
+  Hotkey.h
+  KeySequence.cpp
+  KeySequence.h
+  Logger.cpp
+  Logger.h
+  MainWindow.cpp
+  MainWindow.h
+  MainWindow.ui
+  Messages.cpp
+  Messages.h
+  ScreenSetupModel.cpp
+  ScreenSetupModel.h
+  ServerConfig.cpp
+  ServerConfig.h
+  Styles.h
+  StyleUtils.h
+  VersionChecker.cpp
+  VersionChecker.h
+  config/IServerConfig.h
+  config/Screen.cpp
+  config/Screen.h
+  config/ScreenConfig.cpp
+  config/ScreenConfig.h
+  config/ScreenList.cpp
+  config/ScreenList.h
+  core/ClientConnection.cpp
+  core/ClientConnection.h
+  core/CommandProcess.cpp
+  core/CommandProcess.h
+  core/CoreProcess.cpp
+  core/CoreProcess.h
+  core/ServerConnection.cpp
+  core/ServerConnection.h
+  core/ServerMessage.cpp
+  core/ServerMessage.h
+  core/WaylandWarnings.cpp
+  core/WaylandWarnings.h
+  dialogs/AboutDialog.cpp
+  dialogs/AboutDialog.h
+  dialogs/AboutDialog.ui
+  dialogs/ActionDialog.cpp
+  dialogs/ActionDialog.h
+  dialogs/ActionDialog.ui
+  dialogs/AddClientDialog.cpp
+  dialogs/AddClientDialog.h
+  dialogs/AddClientDialog.ui
+  dialogs/FingerprintDialog.cpp
+  dialogs/FingerprintDialog.h
+  dialogs/HotkeyDialog.cpp
+  dialogs/HotkeyDialog.h
+  dialogs/HotkeyDialog.ui
+  dialogs/ScreenSettingsDialog.cpp
+  dialogs/ScreenSettingsDialog.h
+  dialogs/ScreenSettingsDialog.ui
+  dialogs/ServerConfigDialog.cpp
+  dialogs/ServerConfigDialog.h
+  dialogs/ServerConfigDialog.ui
+  dialogs/SettingsDialog.cpp
+  dialogs/SettingsDialog.h
+  dialogs/SettingsDialog.ui
+  ipc/DaemonIpcClient.cpp
+  ipc/DaemonIpcClient.h
+  proxy/QProcessProxy.cpp
+  proxy/QProcessProxy.h
+  tls/TlsCertificate.cpp
+  tls/TlsCertificate.h
+  tls/TlsUtility.cpp
+  tls/TlsUtility.h
+  validators/AliasValidator.cpp
+  validators/AliasValidator.h
+  validators/ComputerNameValidator.cpp
+  validators/ComputerNameValidator.h
+  validators/EmptyStringValidator.cpp
+  validators/EmptyStringValidator.h
+  validators/IStringValidator.cpp
+  validators/IStringValidator.h
+  validators/LineEditValidator.cpp
+  validators/LineEditValidator.h
+  validators/ScreenDuplicationsValidator.cpp
+  validators/ScreenDuplicationsValidator.h
+  validators/ScreenNameValidator.cpp
+  validators/ScreenNameValidator.h
+  validators/SpacesValidator.cpp
+  validators/SpacesValidator.h
+  validators/ValidationError.cpp
+  validators/ValidationError.h
+  widgets/FingerprintPreview.cpp
+  widgets/FingerprintPreview.h
+  widgets/KeySequenceWidget.cpp
+  widgets/KeySequenceWidget.h
+  widgets/NewScreenWidget.cpp
+  widgets/NewScreenWidget.h
+  widgets/ScreenSetupView.cpp
+  widgets/ScreenSetupView.h
+  widgets/TrashScreenWidget.cpp
+  widgets/TrashScreenWidget.h
+)
+
+target_link_libraries(
+  ${target}
+  common
+  platform
+  Qt6::Core
+  Qt6::Widgets
+  Qt6::Network)
+
+if(WIN32)
+  target_link_libraries(
+    ${target}
+    base
+    arch
+    net
+  )
+endif()
