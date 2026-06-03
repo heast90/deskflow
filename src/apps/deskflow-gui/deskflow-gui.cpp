@@ -6,12 +6,13 @@
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
  */
 
-#include "VersionInfo.h"
 #include "common/Constants.h"
+#include "common/ExitCodes.h"
+#include "common/I18N.h"
+#include "common/PlatformInfo.h"
 #include "common/UrlConstants.h"
+#include "common/VersionInfo.h"
 #include "gui/Diagnostic.h"
-#include "gui/DotEnv.h"
-#include "gui/Logger.h"
 #include "gui/MainWindow.h"
 #include "gui/Messages.h"
 #include "gui/StyleUtils.h"
@@ -22,7 +23,7 @@
 #include <QMessageBox>
 #include <QSharedMemory>
 
-#if defined(Q_OS_MAC)
+#if defined(Q_OS_MACOS)
 #include <Carbon/Carbon.h>
 #include <cstdlib>
 #endif
@@ -31,9 +32,13 @@
 #include <QLoggingCategory>
 #endif
 
+#if defined(WINAPI_XWINDOWS) or defined(WINAPI_LIBEI)
+#include "platform/XDGPortalRegistry.h"
+#endif
+
 using namespace deskflow::gui;
 
-#if defined(Q_OS_MAC)
+#if defined(Q_OS_MACOS)
 bool checkMacAssistiveDevices();
 #endif
 
@@ -46,13 +51,20 @@ int main(int argc, char *argv[])
   QLoggingCategory::setFilterRules(QStringLiteral("*.debug=true\nqt.*=false"));
 #endif
 
+#if defined(WINAPI_XWINDOWS) or defined(WINAPI_LIBEI)
+  deskflow::platform::setAppId();
+#endif
+
   QCoreApplication::setApplicationName(kAppName);
   QCoreApplication::setOrganizationName(kAppName);
   QCoreApplication::setApplicationVersion(kVersion);
   QCoreApplication::setOrganizationDomain(kOrgDomain); // used in prefix, can't be a url
-  QGuiApplication::setDesktopFileName(QStringLiteral("org.deskflow.deskflow"));
+  QGuiApplication::setDesktopFileName(kRevFqdnName);
 
   QApplication app(argc, argv);
+
+  // Ensure the I18N object is made before strings
+  QTextStream(stdout) << "initial language: " << I18N::currentLanguage() << '\n';
 
   // Add Command Line Options
   auto helpOption = QCommandLineOption({"h", "help"}, "Display Help on the command line");
@@ -68,23 +80,24 @@ int main(int argc, char *argv[])
 
   if (!parser.errorText().isEmpty()) {
     qCritical().noquote() << parser.errorText() << "\nUse --help for more information.";
-    return 1;
+    return s_exitArgs;
   }
 
   if (parser.isSet(helpOption)) {
     QTextStream(stdout) << kHeader << QStringLiteral("  %1\n\n").arg(kAppDescription)
                         << parser.helpText().replace(QApplication::applicationFilePath(), kAppId);
-    return 0;
+    return s_exitSuccess;
   }
 
   if (parser.isSet(versionOption)) {
     QTextStream(stdout) << kHeader << kCopyright << Qt::endl;
-    return 0;
+    return s_exitSuccess;
   }
 
+  const auto shmId = QStringLiteral("%1-gui").arg(kAppId);
   // Create a shared memory segment with a unique key
   // This is to prevent a new instance from running if one is already running
-  QSharedMemory sharedMemory("deskflow-gui");
+  QSharedMemory sharedMemory(shmId);
 
   // Attempt to attach first and detach in order to clean up stale shm chunks
   // This can happen if the previous instance was killed or crashed
@@ -95,38 +108,27 @@ int main(int argc, char *argv[])
   if (!sharedMemory.create(1)) {
     // Ping the running instance to have it show itself
     QLocalSocket socket;
-    socket.connectToServer("deskflow-gui", QLocalSocket::ReadOnly);
+    socket.connectToServer(shmId, QLocalSocket::ReadOnly);
     if (!socket.waitForConnected()) {
       // If we can't connect to the other instance tell the user its running.
       // This should never happen but just incase we should show something
-      QMessageBox::information(nullptr, QObject::tr("Deskflow"), QObject::tr("Deskflow is already running"));
+      QMessageBox::information(nullptr, kAppName, QObject::tr("%1 is already running").arg(kAppName));
     }
     socket.disconnectFromServer();
-    return 0;
+    return s_exitDuplicate;
   }
 
-#if !defined(Q_OS_MAC)
-  // causes dark mode to be used on some DE's
-  if (qEnvironmentVariable("XDG_CURRENT_DESKTOP") != QLatin1String("KDE")) {
+  if (!deskflow::platform::isMac() && qEnvironmentVariable("XDG_CURRENT_DESKTOP") != QLatin1String("KDE")) {
     QApplication::setStyle("fusion");
   }
-#endif
 
   // Sets the fallback icon path and fallback theme
-  const auto themeName = QStringLiteral("deskflow-%1").arg(iconMode());
-  if (QIcon::themeName().isEmpty())
-    QIcon::setThemeName(themeName);
-  else
-    QIcon::setFallbackThemeName(themeName);
-  QIcon::setFallbackSearchPaths({QStringLiteral(":/icons/%1").arg(themeName)});
+  updateIconTheme();
 
   qInstallMessageHandler(deskflow::gui::messages::messageHandler);
-  qInfo("%s v%s", kAppName, qPrintable(kVersion));
+  qInfo("%s v%s", kAppName, kDisplayVersion);
 
-  dotenv();
-  Logger::instance().loadEnvVars();
-
-#if defined(Q_OS_MAC)
+#if defined(Q_OS_MACOS)
 
   if (app.applicationDirPath().startsWith("/Volumes/")) {
     QString msgBody = QStringLiteral(
@@ -153,7 +155,7 @@ int main(int argc, char *argv[])
   return QApplication::exec();
 }
 
-#if defined(Q_OS_MAC)
+#if defined(Q_OS_MACOS)
 bool checkMacAssistiveDevices()
 {
   // new in mavericks, applications are trusted individually

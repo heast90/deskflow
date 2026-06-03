@@ -16,18 +16,17 @@ private Q_SLOTS:
   void initTestCase();
   void basicFunction();
   void basicText();
-  void textSize285();
+  void longerText();
   void htmlText();
   void dualText();
   void marshalText();
   void unMarshalText();
-  void unMarshalText285();
+  void unMarshalLongerText();
   void unMarshalTextAndHtml();
   void equalClipboards();
 
 private:
   const std::string kTestString1 = "deskflow rocks";
   const std::string kTestString2 = "String 020";
-  Arch m_arch;
   Log m_log;
 };

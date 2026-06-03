@@ -1,5 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2012 - 2025 Symless Ltd.
  * SPDX-FileCopyrightText: (C) 2002 Chris Schoeneman
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
@@ -7,7 +8,8 @@
 
 #include "deskflow/win32/AppUtilWindows.h"
 
-#include "arch/XArch.h"
+#include "arch/Arch.h"
+#include "arch/win32/ArchDaemonWindows.h"
 #include "arch/win32/ArchMiscWindows.h"
 #include "arch/win32/XArchWindows.h"
 #include "base/Event.h"
@@ -16,15 +18,13 @@
 #include "base/LogOutputters.h"
 #include "common/Constants.h"
 #include "deskflow/App.h"
-#include "deskflow/ArgsBase.h"
+#include "deskflow/DeskflowException.h"
 #include "deskflow/Screen.h"
-#include "deskflow/XDeskflow.h"
+#include "mt/Thread.h"
 #include "platform/MSWindowsScreen.h"
 
-#include <VersionHelpers.h>
 #include <Windows.h>
 #include <conio.h>
-#include <memory>
 
 AppUtilWindows::AppUtilWindows(IEventQueue *events) : m_events(events), m_exitMode(kExitModeNormal)
 {
@@ -50,7 +50,7 @@ AppUtilWindows::~AppUtilWindows()
 
 BOOL WINAPI AppUtilWindows::consoleHandler(DWORD)
 {
-  LOG((CLOG_INFO "got shutdown signal"));
+  LOG_INFO("got shutdown signal");
   IEventQueue *events = AppUtil::instance().app().getEvents();
   events->addEvent(Event(EventTypes::Quit));
   return TRUE;
@@ -61,11 +61,11 @@ static int mainLoopStatic()
   return AppUtil::instance().app().mainLoop();
 }
 
-int AppUtilWindows::daemonNTMainLoop(int argc, const char **argv)
+int AppUtilWindows::daemonNTMainLoop()
 {
-  app().initApp(argc, argv);
+  app().initApp();
 
-  return ArchMiscWindows::runDaemon(mainLoopStatic);
+  return ArchDaemonWindows::runDaemon(mainLoopStatic);
 }
 
 void AppUtilWindows::exitApp(int code)
@@ -73,42 +73,38 @@ void AppUtilWindows::exitApp(int code)
   switch (m_exitMode) {
 
   case kExitModeDaemon:
-    ArchMiscWindows::daemonFailed(code);
+    ArchDaemonWindows::daemonFailed(code);
     break;
 
   default:
-    throw XExitApp(code);
+    throw ExitAppException(code);
   }
 }
 
-int daemonNTMainLoopStatic(int argc, const char **argv)
+int daemonNTMainLoopStatic()
 {
-  return AppUtilWindows::instance().daemonNTMainLoop(argc, argv);
+  return AppUtilWindows::instance().daemonNTMainLoop();
 }
 
-int AppUtilWindows::daemonNTStartup(int, char **)
+int AppUtilWindows::daemonNTStartup()
 {
   SystemLogger sysLogger(app().daemonName(), false);
   m_exitMode = kExitModeDaemon;
-  return ARCH->daemonize(app().daemonName(), daemonNTMainLoopStatic);
+  return ARCH->daemonize(daemonNTMainLoopStatic);
 }
 
-static int daemonNTStartupStatic(int argc, char **argv)
+static int daemonNTStartupStatic()
 {
-  return AppUtilWindows::instance().daemonNTStartup(argc, argv);
+  return AppUtilWindows::instance().daemonNTStartup();
 }
 
-static int foregroundStartupStatic(int argc, char **argv)
+static int foregroundStartupStatic()
 {
-  return AppUtil::instance().app().foregroundStartup(argc, argv);
+  return AppUtil::instance().app().start();
 }
 
-int AppUtilWindows::run(int argc, char **argv)
+int AppUtilWindows::run()
 {
-  if (!IsWindowsXPSP3OrGreater()) {
-    throw std::runtime_error("unsupported os version, xp sp3 or greater required");
-  }
-
   // record window instance for tray icon, etc
   ArchMiscWindows::setInstanceWin32(GetModuleHandle(nullptr));
 
@@ -120,10 +116,9 @@ int AppUtilWindows::run(int argc, char **argv)
     startup = &daemonNTStartupStatic;
   } else {
     startup = &foregroundStartupStatic;
-    app().argsBase().m_daemon = false;
   }
 
-  return app().runInner(argc, argv, startup);
+  return app().runInner(startup);
 }
 
 AppUtilWindows &AppUtilWindows::instance()
@@ -181,7 +176,7 @@ HKL AppUtilWindows::getCurrentKeyboardLayout() const
   if (GetGUIThreadInfo(0, &gti) && gti.hwndActive) {
     layout = GetKeyboardLayout(GetWindowThreadProcessId(gti.hwndActive, nullptr));
   } else {
-    LOG((CLOG_WARN "failed to determine current keyboard layout"));
+    LOG_WARN("failed to determine current keyboard layout");
   }
 
   return layout;
@@ -189,7 +184,7 @@ HKL AppUtilWindows::getCurrentKeyboardLayout() const
 
 void AppUtilWindows::eventLoop()
 {
-  HANDLE hCloseEvent = CreateEventA(nullptr, TRUE, FALSE, kCloseEventName);
+  HANDLE hCloseEvent = CreateEvent(nullptr, TRUE, FALSE, kCloseEventName);
   if (!hCloseEvent) {
     LOG_CRIT("failed to create event for windows event loop");
     throw std::runtime_error(windowsErrorToString(GetLastError()));

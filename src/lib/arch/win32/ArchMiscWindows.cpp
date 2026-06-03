@@ -1,5 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2012 - 2016, 2024 - 2025 Symless Ltd.
  * SPDX-FileCopyrightText: (C) 2002 Chris Schoeneman
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
@@ -7,7 +8,6 @@
 
 #include "arch/win32/ArchMiscWindows.h"
 
-#include "arch/win32/ArchDaemonWindows.h"
 #include "arch/win32/XArchWindows.h"
 #include "base/Log.h"
 #include "base/String.h"
@@ -17,6 +17,7 @@
 
 #include <array>
 #include <filesystem>
+#include <stdexcept>
 
 // Useful for debugging Windows specific bootstrapping code before the logging system is initialized.
 // This output can be viewed by attaching a Microsoft debugger or by using the DebugView program.
@@ -62,26 +63,6 @@ void ArchMiscWindows::init()
 {
   // stop windows system error dialogs from showing.
   SetErrorMode(SEM_FAILCRITICALERRORS);
-}
-
-int ArchMiscWindows::runDaemon(RunFunc runFunc)
-{
-  return ArchDaemonWindows::runDaemon(runFunc);
-}
-
-void ArchMiscWindows::daemonRunning(bool running)
-{
-  ArchDaemonWindows::daemonRunning(running);
-}
-
-void ArchMiscWindows::daemonFailed(int result)
-{
-  ArchDaemonWindows::daemonFailed(result);
-}
-
-UINT ArchMiscWindows::getDaemonQuitMessage()
-{
-  return ArchDaemonWindows::getDaemonQuitMessage();
 }
 
 HKEY ArchMiscWindows::openKey(HKEY key, const TCHAR *keyName)
@@ -178,47 +159,43 @@ ArchMiscWindows::EValueType ArchMiscWindows::typeOfValue(HKEY key, const TCHAR *
 
 void ArchMiscWindows::setValue(HKEY key, const TCHAR *name, const std::string &value)
 {
-  assert(key != nullptr);
   if (key == nullptr) {
-    // TODO: throw exception
-    return;
+    throw std::invalid_argument("Registry key cannot be nullptr");
   }
   RegSetValueEx(key, name, 0, REG_SZ, reinterpret_cast<const BYTE *>(value.c_str()), (DWORD)value.size() + 1);
 }
 
 void ArchMiscWindows::setValue(HKEY key, const TCHAR *name, DWORD value)
 {
-  assert(key != nullptr);
   if (key == nullptr) {
-    // TODO: throw exception
-    return;
+    throw std::invalid_argument("Registry key cannot be nullptr");
   }
   RegSetValueEx(key, name, 0, REG_DWORD, reinterpret_cast<CONST BYTE *>(&value), sizeof(DWORD));
 }
 
-std::string ArchMiscWindows::readBinaryOrString(HKEY key, const TCHAR *name, DWORD type)
+std::wstring ArchMiscWindows::readBinaryOrString(HKEY key, const TCHAR *name, DWORD type)
 {
   // get the size of the string
   DWORD actualType;
   DWORD size = 0;
   LONG result = RegQueryValueEx(key, name, 0, &actualType, nullptr, &size);
   if (result != ERROR_SUCCESS || actualType != type) {
-    return std::string();
+    return std::wstring();
   }
 
   // if zero size then return empty string
   if (size == 0) {
-    return std::string();
+    return std::wstring();
   }
 
   // allocate space
-  char *buffer = new char[size];
+  wchar_t *buffer = new wchar_t[size];
 
   // read it
   result = RegQueryValueEx(key, name, 0, &actualType, reinterpret_cast<BYTE *>(buffer), &size);
   if (result != ERROR_SUCCESS || actualType != type) {
     delete[] buffer;
-    return std::string();
+    return std::wstring();
   }
 
   // clean up and return value
@@ -226,12 +203,12 @@ std::string ArchMiscWindows::readBinaryOrString(HKEY key, const TCHAR *name, DWO
     // don't include terminating nul;  std::string will add one.
     --size;
   }
-  std::string value(buffer, size);
+  std::wstring value(buffer, size);
   delete[] buffer;
   return value;
 }
 
-std::string ArchMiscWindows::readValueString(HKEY key, const TCHAR *name)
+std::wstring ArchMiscWindows::readValueString(HKEY key, const TCHAR *name)
 {
   return readBinaryOrString(key, name, REG_SZ);
 }
@@ -265,7 +242,7 @@ void ArchMiscWindows::setThreadExecutionState(DWORD busyModes)
 {
   // look up function dynamically so we work on older systems
   if (s_stes == nullptr) {
-    HINSTANCE kernel = LoadLibrary("kernel32.dll");
+    HINSTANCE kernel = LoadLibrary(L"kernel32.dll");
     if (kernel != nullptr) {
       s_stes = reinterpret_cast<STES_t>(GetProcAddress(kernel, "SetThreadExecutionState"));
     }
@@ -303,7 +280,7 @@ void ArchMiscWindows::wakeupDisplay()
   // ES_CONTINUOUS, which we don't want.
 
   if (s_stes == nullptr) {
-    HINSTANCE kernel = LoadLibrary("kernel32.dll");
+    HINSTANCE kernel = LoadLibrary(L"kernel32.dll");
     if (kernel != nullptr) {
       s_stes = reinterpret_cast<STES_t>(GetProcAddress(kernel, "SetThreadExecutionState"));
     }
@@ -320,20 +297,20 @@ void ArchMiscWindows::wakeupDisplay()
 
 bool ArchMiscWindows::wasLaunchedAsService()
 {
-  std::string name;
+  std::wstring name;
   if (!getParentProcessName(name)) {
-    LOG((CLOG_ERR "cannot determine if process was launched as service"));
+    LOG_ERR("cannot determine if process was launched as service");
     return false;
   }
 
-  return (name == "services.exe");
+  return (name == L"services.exe");
 }
 
-bool ArchMiscWindows::getParentProcessName(std::string &name)
+bool ArchMiscWindows::getParentProcessName(std::wstring &name)
 {
   PROCESSENTRY32 parentEntry;
   if (!getParentProcessEntry(parentEntry)) {
-    LOG((CLOG_ERR "could not get entry for parent process"));
+    LOG_ERR("could not get entry for parent process");
     return false;
   }
 
@@ -364,7 +341,7 @@ BOOL WINAPI ArchMiscWindows::getProcessEntry(PROCESSENTRY32 &entry, DWORD proces
   // first we need to take a snapshot of the running processes
   HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
   if (snapshot == INVALID_HANDLE_VALUE) {
-    LOG((CLOG_ERR "could not get process snapshot (error: %i)", GetLastError()));
+    LOG_ERR("could not get process snapshot (error: %i)", GetLastError());
     return FALSE;
   }
 
@@ -374,7 +351,7 @@ BOOL WINAPI ArchMiscWindows::getProcessEntry(PROCESSENTRY32 &entry, DWORD proces
   // unlikely we can go any further
   BOOL gotEntry = Process32First(snapshot, &entry);
   if (!gotEntry) {
-    LOG((CLOG_ERR "could not get first process entry (error: %i)", GetLastError()));
+    LOG_ERR("could not get first process entry (error: %i)", GetLastError());
     return FALSE;
   }
 
@@ -405,11 +382,11 @@ void ArchMiscWindows::setInstanceWin32(HINSTANCE instance)
   s_instanceWin32 = instance;
 }
 
-std::string ArchMiscWindows::getActiveDesktopName()
+std::wstring ArchMiscWindows::getActiveDesktopName()
 {
   HDESK desk = OpenInputDesktop(0, TRUE, GENERIC_READ);
   if (desk == nullptr) {
-    LOG((CLOG_ERR "could not open input desktop"));
+    LOG_ERR("could not open input desktop");
     throw std::runtime_error(windowsErrorToString(GetLastError()));
   }
 
@@ -440,7 +417,7 @@ HMODULE ArchMiscWindows::findLoadedModule(std::array<const char *, 2> moduleName
     }
 
     for (const auto &moduleName : moduleNames) {
-      if (_stricmp(loadedModuleName.data(), moduleName) == 0) {
+      if (_stricmp((loadedModuleName.data()), moduleName) == 0) {
         return hModules[i];
       }
     }

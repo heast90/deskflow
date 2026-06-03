@@ -62,6 +62,8 @@ static const struct
     {Qt::Key_Launch0, "AppUser1"},
     {Qt::Key_Launch1, "AppUser2"},
     {Qt::Key_Select, "Select"},
+    {Qt::Key_Comma, "Comma"},
+    {Qt::Key_Semicolon, "Semicolon"},
 
     {0, nullptr}
 };
@@ -189,21 +191,21 @@ QString KeySequence::keyToString(int key)
   // for keypad keys instead)
   key &= ~Qt::KeypadModifier;
 
-  // a printable 7 bit character?
-  if (key < 0x80 && key != Qt::Key_Space)
-    return QChar(key & 0x7f).toLower();
-
-  // a function key?
-  if (key >= Qt::Key_F1 && key <= Qt::Key_F35)
-    return QString::fromUtf8("F%1").arg(key - Qt::Key_F1 + 1);
-
-  // a special key?
+  // a special key? (check before printable to handle comma/semicolon)
   int i = 0;
   while (keyname[i].name) {
     if (key == keyname[i].key)
       return QString::fromUtf8(keyname[i].name);
     i++;
   }
+
+  // a printable 7 bit character?
+  if (key < 0x80)
+    return QChar(key & 0x7f).toLower();
+
+  // a function key?
+  if (key >= Qt::Key_F1 && key <= Qt::Key_F35)
+    return QString::fromUtf8("F%1").arg(key - Qt::Key_F1 + 1);
 
   // representable in ucs2?
   if (key < 0x10000) {
@@ -217,9 +219,4 @@ QString KeySequence::keyToString(int key)
 
   // give up, deskflow probably won't handle this
   return "";
-}
-
-bool KeySequence::operator==(const KeySequence &ks) const
-{
-  return m_Sequence == ks.m_Sequence && m_Modifiers == ks.m_Modifiers && m_IsValid == ks.m_IsValid;
 }

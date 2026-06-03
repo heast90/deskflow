@@ -7,6 +7,7 @@
 #include "AliasValidator.h"
 
 #include "ComputerNameValidator.h"
+#include "IpAddressValidator.h"
 #include "SpacesValidator.h"
 
 #include <QRegularExpression>
@@ -15,8 +16,9 @@ namespace validators {
 
 AliasValidator::AliasValidator(QLineEdit *parent, ValidationError *error) : LineEditValidator(parent, error)
 {
-  addValidator(std::make_unique<SpacesValidator>("Computer name cannot contain spaces"));
-  addValidator(std::make_unique<ComputerNameValidator>("Contains invalid characters or is too long"));
+  addValidator(std::make_unique<SpacesValidator>(tr("Computer name cannot contain spaces")));
+  addValidator(std::make_unique<IpAddressValidator>(tr("Aliases may not be ip addresses")));
+  addValidator(std::make_unique<ComputerNameValidator>(tr("Contains invalid characters or is too long")));
 }
 
 } // namespace validators

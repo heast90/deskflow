@@ -6,8 +6,8 @@
 
 #include "VersionChecker.h"
 
-#include "VersionInfo.h"
 #include "common/Settings.h"
+#include "common/VersionInfo.h"
 
 #include <QLocale>
 #include <QNetworkAccessManager>
@@ -15,7 +15,7 @@
 #include <QNetworkRequest>
 #include <QProcess>
 #include <QRegularExpression>
-#include <memory>
+#include <climits>
 
 VersionChecker::VersionChecker(QObject *parent) : QObject(parent), m_network{new QNetworkAccessManager(this)}
 {
@@ -24,13 +24,13 @@ VersionChecker::VersionChecker(QObject *parent) : QObject(parent), m_network{new
 
 void VersionChecker::checkLatest() const
 {
-  const QString url = Settings::value(Settings::Core::UpdateUrl).toString();
+  const QString url = Settings::value(Settings::Gui::UpdateCheckUrl).toString();
   qDebug("checking for updates at: %s", qPrintable(url));
   auto request = QNetworkRequest(url);
   auto userAgent = QString("%1 %2 on %3").arg(kAppName, kVersion, QSysInfo::prettyProductName());
   request.setHeader(QNetworkRequest::UserAgentHeader, userAgent);
   request.setRawHeader("X-Deskflow-Version", kVersion);
-  request.setRawHeader("X-Deskflow-Language", QLocale::system().name().toStdString().c_str());
+  request.setRawHeader("X-Deskflow-Language", qPrintable(QLocale::system().name()));
   m_network->get(request);
 }
 
@@ -39,6 +39,7 @@ void VersionChecker::replyFinished(QNetworkReply *reply)
   const auto httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
   if (reply->error() != QNetworkReply::NoError) {
     qWarning("version check server error: %s", qPrintable(reply->errorString()));
+    qWarning("version check server response: %s", qPrintable(QString(reply->readAll())));
     qWarning("error checking for updates, http status: %d", httpStatus);
     return;
   }

@@ -1,5 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2012 - 2016 Symless Ltd.
  * SPDX-FileCopyrightText: (C) 2002 Chris Schoeneman
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
@@ -40,30 +41,6 @@ public:
   //! Initialize
   static void init();
 
-  //! Run the daemon
-  /*!
-  Delegates to ArchDaemonWindows.
-  */
-  static int runDaemon(RunFunc runFunc);
-
-  //! Indicate daemon is in main loop
-  /*!
-  Delegates to ArchDaemonWindows.
-  */
-  static void daemonRunning(bool running);
-
-  //! Indicate failure of running daemon
-  /*!
-  Delegates to ArchDaemonWindows.
-  */
-  static void daemonFailed(int result);
-
-  //! Get daemon quit message
-  /*!
-  Delegates to ArchDaemonWindows.
-  */
-  static UINT getDaemonQuitMessage();
-
   //! Open and return a registry key, closing the parent key
   static HKEY openKey(HKEY parent, const TCHAR *child);
 
@@ -92,7 +69,7 @@ public:
   static void setValue(HKEY key, const TCHAR *name, DWORD value);
 
   //! Read a string value from the registry
-  static std::string readValueString(HKEY, const TCHAR *name);
+  static std::wstring readValueString(HKEY, const TCHAR *name);
 
   //! Read a DWORD value from the registry
   static DWORD readValueInt(HKEY, const TCHAR *name);
@@ -110,7 +87,7 @@ public:
   static bool wasLaunchedAsService();
 
   //! Returns true if we got the parent process name.
-  static bool getParentProcessName(std::string &name);
+  static bool getParentProcessName(std::wstring &name);
 
   //! Prevent hard to troubleshoot errors, e.g. access violations.
   static void guardRuntimeVersion();
@@ -125,7 +102,7 @@ public:
   static void setInstanceWin32(HINSTANCE instance);
 
   //! Get the name of the active input desktop.
-  static std::string getActiveDesktopName();
+  static std::wstring getActiveDesktopName();
 
   //! Returns true if the process is running with elevated privileges (i.e. as admin).
   static bool isProcessElevated();
@@ -138,7 +115,7 @@ private:
   static HKEY openKey(HKEY parent, const TCHAR *const *keyPath, bool create);
 
   //! Read a string value from the registry
-  static std::string readBinaryOrString(HKEY, const TCHAR *name, DWORD type);
+  static std::wstring readBinaryOrString(HKEY, const TCHAR *name, DWORD type);
 
   //! Set thread busy state
   static void setThreadExecutionState(DWORD);

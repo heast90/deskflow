@@ -7,32 +7,27 @@
 #pragma once
 
 #include <QByteArray>
+#include <QCryptographicHash>
 #include <QObject>
 
 struct Fingerprint
 {
-private:
   Q_GADGET
   inline static QString m_type_sha1 = QStringLiteral("sha1");
   inline static QString m_type_sha256 = QStringLiteral("sha256");
   inline static QString m_type_invalid = QStringLiteral("invalid");
 
 public:
-  enum class Type
-  {
-    Invalid,
-    SHA1,
-    SHA256
-  };
-  Q_ENUM(Type)
-  Type type = Type::Invalid;
+  // Since there is no "undefined" or "invalid" we will use MD4 the value of 0 as default.
+  // Any type that is not Sha1 or Sha256 will be considered invalid
+  QCryptographicHash::Algorithm type = QCryptographicHash::Md4;
   QByteArray data;
 
   bool isValid() const;
 
-  bool operator==(const Fingerprint &other) const;
+  bool operator==(const Fingerprint &other) const = default;
   QString toDbLine() const;
   static Fingerprint fromDbLine(const QString &line);
-  static QString typeToString(Fingerprint::Type type);
-  static Fingerprint::Type typeFromString(const QString &type);
+  static QString typeToString(QCryptographicHash::Algorithm type);
+  static QCryptographicHash::Algorithm typeFromString(const QString &type);
 };

@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2019 - 2025 Chris Rizzitello <sithlord48@gmail.com>
+# SPDX-FileCopyrightText: (C) 2019 - 2025 Chris Rizzitello <sithlord48@gmail.com>
 # SPDX-License-Identifier: MIT
 
 find_package(Doxygen QUIET)
@@ -12,6 +12,8 @@ if (DOXYGEN_FOUND)
   set(DOXYGEN_STRIP_FROM_PATH ${CMAKE_SOURCE_DIR})
   set(DOXYGEN_QUIET YES)
   set(DOXYGEN_PROJECT_NAME ${CMAKE_PROJECT_PROPER_NAME})
+  set(DOXYGEN_PROJECT_ICON "${CMAKE_CURRENT_SOURCE_DIR}/deskflow-logo.png")
+  set(DOXYGEN_PROJECT_LOGO "${CMAKE_CURRENT_SOURCE_DIR}/deskflow-logo.png")
 
   if (BUILD_USER_DOCS)
     add_subdirectory(user)

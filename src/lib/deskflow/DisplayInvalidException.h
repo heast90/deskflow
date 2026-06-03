@@ -7,18 +7,18 @@
 #pragma once
 
 #include <stdexcept>
+
+#ifdef __APPLE__
 #include <string>
+#endif
 
 class DisplayInvalidException : public std::runtime_error
 {
+#ifdef __APPLE__
 public:
-  explicit DisplayInvalidException(const char *msg) : std::runtime_error(msg)
-  {
-    // do nothing
-  }
-
   explicit DisplayInvalidException(const std::string &msg) : std::runtime_error(msg)
   {
     // do nothing
   }
+#endif
 };

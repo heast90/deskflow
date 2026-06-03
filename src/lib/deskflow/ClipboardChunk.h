@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include "common/Common.h"
 #include "deskflow/Chunk.h"
 #include "deskflow/ClipboardTypes.h"
 #include "deskflow/ProtocolTypes.h"
@@ -17,7 +16,7 @@ constexpr static auto s_clipboardChunkMetaSize = 7;
 
 namespace deskflow {
 class IStream;
-};
+}
 
 class ClipboardChunk : public Chunk
 {

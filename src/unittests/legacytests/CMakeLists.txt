@@ -1,6 +1,6 @@
-# SPDX-FileCopyrightText: 2024 Deskflow Developers
-# SPDX-FileCopyrightText: 2012 - 2024 Symless Ltd
-# SPDX-FileCopyrightText: 2009 - 2012 Nick Bolton
+# SPDX-FileCopyrightText: (C) 2024 Deskflow Developers
+# SPDX-FileCopyrightText: (C) 2012 - 2024 Symless Ltd
+# SPDX-FileCopyrightText: (C) 2009 - 2012 Nick Bolton
 # SPDX-License-Identifier: MIT
 
 include(FetchContent)
@@ -61,11 +61,6 @@ macro(set_sources)
   endif()
 
   list(APPEND sources ${PROJECT_SOURCE_DIR}/src/apps/res/deskflow.qrc)
-
-  # Hack this test is broken on CI ARM64
-  if(WIN32 AND BUILD_ARCHITECTURE MATCHES "arm64")
-    list(REMOVE_ITEM sources ${test_base_dir}/legacytests/gui/core/CoreProcessTests.cpp)
-  endif()
 
   replace_platform_sources()
   replace_arch_sources()

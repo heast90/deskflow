@@ -15,25 +15,23 @@
 #elif WINAPI_CARBON
 #include <Carbon/Carbon.h>
 #include <platform/OSXAutoTypes.h>
-#else
-#error Platform not supported.
 #endif
 
 #include <filesystem>
 
-AppUtilUnix::AppUtilUnix(const IEventQueue *events)
+AppUtilUnix::AppUtilUnix(const IEventQueue *)
 {
   // do nothing
 }
 
-int standardStartupStatic(int argc, char **argv)
+int startStatic()
 {
-  return AppUtil::instance().app().standardStartup(argc, argv);
+  return AppUtil::instance().app().start();
 }
 
-int AppUtilUnix::run(int argc, char **argv)
+int AppUtilUnix::run()
 {
-  return app().runInner(argc, argv, &standardStartupStatic);
+  return app().runInner(&startStatic);
 }
 
 void AppUtilUnix::startNode()
@@ -92,13 +90,13 @@ std::string AppUtilUnix::getCurrentLanguageCode()
 
   auto display = XOpenDisplay(nullptr);
   if (!display) {
-    LOG((CLOG_WARN "failed to open x11 default display"));
+    LOG_WARN("failed to open x11 default display");
     return result;
   }
 
   auto kbdDescr = XkbAllocKeyboard();
   if (!kbdDescr) {
-    LOG((CLOG_WARN "failed to get x11 keyboard description"));
+    LOG_WARN("failed to get x11 keyboard description");
     return result;
   }
   XkbGetNames(display, XkbSymbolsNameMask, kbdDescr);
@@ -108,7 +106,7 @@ std::string AppUtilUnix::getCurrentLanguageCode()
 
   XkbStateRec state;
   XkbGetState(display, XkbUseCoreKbd, &state);
-  auto nedeedGroupIndex = static_cast<int>(state.group);
+  auto neededGroupIndex = static_cast<int>(state.group);
 
   size_t groupIdx = 0;
   size_t groupStartI = 0;
@@ -120,7 +118,7 @@ std::string AppUtilUnix::getCurrentLanguageCode()
     if (auto group = rawLayouts.substr(groupStartI, strI - groupStartI);
         group.find("group", 0, 5) == std::string::npos && group.find("inet", 0, 4) == std::string::npos &&
         group.find("pc", 0, 2) == std::string::npos) {
-      if (nedeedGroupIndex == groupIdx) {
+      if (neededGroupIndex == groupIdx) {
         result = group.substr(0, std::min(group.find('(', 0), group.find(':', 0)));
         break;
       }
@@ -134,7 +132,7 @@ std::string AppUtilUnix::getCurrentLanguageCode()
   XFree(kbdDescr);
   XCloseDisplay(display);
 
-  result = X11LayoutsParser::convertLayotToISO(m_evdev, result);
+  result = X11LayoutsParser::convertLayoutToISO(m_evdev, result);
 
 #elif WINAPI_CARBON
   auto layoutLanguages =

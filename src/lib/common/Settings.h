@@ -1,6 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
- * SPDX-FileCopyrightText: (C) 2025 Chris Rizzitello <sithlord48@gmail.com>
+ * SPDX-FileCopyrightText: (C) 2025 - 2026 Chris Rizzitello <sithlord48@gmail.com>
  * SPDX-FileCopyrightText: (C) 2016 - 2025 Symless Ltd.
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
  */
@@ -19,24 +19,28 @@ class Settings : public QObject
   Q_OBJECT
 public:
 #if defined(Q_OS_WIN)
-  inline const static auto UserDir = QStringLiteral("%1/AppData/Local/%2").arg(QDir::homePath(), kAppName);
+  inline const static auto UserDir = QStringLiteral("%1/AppData/Roaming/%2").arg(QDir::homePath(), kAppName);
   inline const static auto SystemDir = QStringLiteral("%1ProgramData/%2").arg(QDir::rootPath(), kAppName);
-#elif defined(Q_OS_MAC)
+#elif defined(Q_OS_MACOS)
   inline const static auto UserDir = QStringLiteral("%1/Library/%2").arg(QDir::homePath(), kAppName);
   inline const static auto SystemDir = QStringLiteral("/Library/%1").arg(kAppName);
 #else
   inline const static auto UserDir = QStringLiteral("%1/.config/%2").arg(QDir::homePath(), kAppName);
   inline const static auto SystemDir = QStringLiteral("/etc/%1").arg(kAppName);
 #endif
+
   inline const static auto UserSettingFile = QStringLiteral("%1/%2.conf").arg(UserDir, kAppName);
   inline const static auto SystemSettingFile = QStringLiteral("%1/%2.conf").arg(SystemDir, kAppName);
 
   struct Client
   {
-    inline static const auto Binary = QStringLiteral("client/binary");
-    inline static const auto InvertScrollDirection = QStringLiteral("client/invertScrollDirection");
+    inline static const auto InvertYScroll = QStringLiteral("client/invertYScroll");
+    inline static const auto InvertXScroll = QStringLiteral("client/invertXScroll");
+    inline static const auto YScrollScale = QStringLiteral("client/yScrollScale");
+    inline static const auto XScrollScale = QStringLiteral("client/xScrollScale");
     inline static const auto LanguageSync = QStringLiteral("client/languageSync");
     inline static const auto RemoteHost = QStringLiteral("client/remoteHost");
+    inline static const auto XdpRestoreToken = QStringLiteral("client/xdpRestoreToken");
   };
   struct Core
   {
@@ -46,9 +50,14 @@ public:
     inline static const auto Port = QStringLiteral("core/port");
     inline static const auto PreventSleep = QStringLiteral("core/preventSleep");
     inline static const auto ProcessMode = QStringLiteral("core/processMode");
-    inline static const auto ScreenName = QStringLiteral("core/screenName");
-    inline static const auto StartedBefore = QStringLiteral("core/startedBefore");
-    inline static const auto UpdateUrl = QStringLiteral("core/updateUrl");
+    inline static const auto ComputerName = QStringLiteral("core/computerName");
+    inline static const auto Display = QStringLiteral("core/display");
+    inline static const auto UseHooks = QStringLiteral("core/useHooks");
+    inline static const auto Language = QStringLiteral("core/language");
+    inline static const auto UseWlClipboard = QStringLiteral("core/wlClipboard");
+
+    // TODO: REMOVE In 2.0
+    inline static const auto ScreenName = QStringLiteral("core/screenName"); // Replaced By ComputerName
   };
   struct Daemon
   {
@@ -60,18 +69,25 @@ public:
   struct Gui
   {
     inline static const auto Autohide = QStringLiteral("gui/autoHide");
+    inline static const auto AutoStartCore = QStringLiteral("gui/startCoreWithGui");
     inline static const auto AutoUpdateCheck = QStringLiteral("gui/enableUpdateCheck");
+    inline static const auto UpdateCheckUrl = QStringLiteral("gui/updateCheckUrl");
     inline static const auto CloseReminder = QStringLiteral("gui/closeReminder");
     inline static const auto CloseToTray = QStringLiteral("gui/closeToTray");
     inline static const auto LogExpanded = QStringLiteral("gui/logExpanded");
     inline static const auto SymbolicTrayIcon = QStringLiteral("gui/symbolicTrayIcon");
     inline static const auto WindowGeometry = QStringLiteral("gui/windowGeometry");
+    inline static const auto ShowGenericClientFailureDialog = QStringLiteral("gui/showGenericClientFailureDialog");
+    inline static const auto ShownFirstConnectedMessage = QStringLiteral("gui/shownFirstConnectedMessage");
+    inline static const auto ShownServerFirstStartMessage = QStringLiteral("gui/shownServerFirstStartMessage");
+    inline static const auto ShowVersionInTitle = QStringLiteral("gui/showVersionInTitle");
   };
   struct Log
   {
     inline static const auto File = QStringLiteral("log/file");
     inline static const auto Level = QStringLiteral("log/level");
     inline static const auto ToFile = QStringLiteral("log/toFile");
+    inline static const auto GuiDebug = QStringLiteral("log/guiDebug");
   };
   struct Security
   {
@@ -82,8 +98,6 @@ public:
   };
   struct Server
   {
-    inline static const auto Binary = QStringLiteral("server/binary");
-    inline static const auto ConfigVisible = QStringLiteral("server/configVisible");
     inline static const auto ExternalConfig = QStringLiteral("server/externalConfig");
     inline static const auto ExternalConfigFile = QStringLiteral("server/externalConfigFile");
   };
@@ -111,23 +125,25 @@ public:
   Q_ENUM(CoreMode)
 
   static Settings *instance();
-  static void setSettingFile(const QString &settingsFile = QString());
+  static void setSettingsFile(const QString &settingsFile = QString());
+  static void setStateFile(const QString &stateFile = QString());
   static void setValue(const QString &key = QString(), const QVariant &value = QVariant());
   static QVariant value(const QString &key = QString());
   static void restoreDefaultSettings();
   static QVariant defaultValue(const QString &key);
   static bool isWritable();
-  static bool isNativeMode();
+  static bool isPortableMode();
   static QString settingsFile();
   static QString settingsPath();
   static QString tlsDir();
-  static QString tlsLocalDb();
   static QString tlsTrustedServersDb();
   static QString tlsTrustedClientsDb();
   static QString logLevelText();
   static QSettingsProxy &proxy();
   static void save(bool emitSaving = true);
   static QStringList validKeys();
+  static int logLevelToInt(const QString &level);
+  static QString portableSettingsFile();
 
 Q_SIGNALS:
   void settingsChanged(const QString key);
@@ -138,25 +154,52 @@ private:
   Settings *operator=(Settings &other) = delete;
   Settings(const Settings &other) = delete;
   ~Settings() override = default;
+
+  /**
+   * @brief This method uses the Settings::m_upgradeMap, keys are upgraded if the oldkey is found and the newKey is not
+   * This method is run when settings is created before cleaning the settings and when you change settings files
+   * It does not remove any keys, only copies the old value to the new setings key
+   */
+  void upgradeSettings();
   void cleanSettings();
+  void cleanStateSettings();
+
+  /**
+   * @brief write an initial computer name
+   */
+  void setupComputerName();
+
+  /**
+   * @brief cleanComputerName ensure a valid computerName from the provided one
+   * @param name any string to be used as the computerName
+   * @return a valid computerName
+   */
+  static QString cleanComputerName(const QString &name);
 
   QSettings *m_settings = nullptr;
-  QString m_portableSettingsFile = QStringLiteral("%1/settings/%2.conf");
+  QSettings *m_stateSettings = nullptr;
   std::shared_ptr<QSettingsProxy> m_settingsProxy;
 
   // clang-format off
   inline static const QStringList m_logLevels = {
-     QStringLiteral("INFO")
+      QStringLiteral("FATAL")
+    , QStringLiteral("ERROR")
+    , QStringLiteral("WARNING")
+    , QStringLiteral("NOTE")
+    , QStringLiteral("INFO")
     , QStringLiteral("DEBUG")
     , QStringLiteral("DEBUG1")
     , QStringLiteral("DEBUG2")
   };
 
   inline static const QStringList m_validKeys = {
-      Settings::Client::Binary
-    , Settings::Client::InvertScrollDirection
+      Settings::Client::InvertYScroll
+    , Settings::Client::InvertXScroll
     , Settings::Client::LanguageSync
     , Settings::Client::RemoteHost
+    , Settings::Client::YScrollScale
+    , Settings::Client::XScrollScale
+    , Settings::Client::XdpRestoreToken
     , Settings::Core::CoreMode
     , Settings::Core::Interface
     , Settings::Core::LastVersion
@@ -164,29 +207,75 @@ private:
     , Settings::Core::PreventSleep
     , Settings::Core::ProcessMode
     , Settings::Core::ScreenName
-    , Settings::Core::StartedBefore
-    , Settings::Core::UpdateUrl
+    , Settings::Core::ComputerName
+    , Settings::Core::Display
+    , Settings::Core::UseHooks
+    , Settings::Core::UseWlClipboard
+    , Settings::Core::Language
     , Settings::Daemon::Command
     , Settings::Daemon::Elevate
     , Settings::Daemon::LogFile
     , Settings::Log::File
     , Settings::Log::Level
     , Settings::Log::ToFile
+    , Settings::Log::GuiDebug
     , Settings::Gui::Autohide
+    , Settings::Gui::AutoStartCore
     , Settings::Gui::AutoUpdateCheck
+    , Settings::Gui::UpdateCheckUrl
     , Settings::Gui::CloseReminder
     , Settings::Gui::CloseToTray
     , Settings::Gui::LogExpanded
     , Settings::Gui::SymbolicTrayIcon
     , Settings::Gui::WindowGeometry
+    , Settings::Gui::ShowGenericClientFailureDialog
+    , Settings::Gui::ShownFirstConnectedMessage
+    , Settings::Gui::ShownServerFirstStartMessage
+    , Settings::Gui::ShowVersionInTitle
     , Settings::Security::Certificate
     , Settings::Security::CheckPeers
     , Settings::Security::KeySize
     , Settings::Security::TlsEnabled
-    , Settings::Server::Binary
-    , Settings::Server::ConfigVisible
     , Settings::Server::ExternalConfig
     , Settings::Server::ExternalConfigFile
+  };
+
+  // When checking the default values this list contains the ones that default to false.
+  inline static const QStringList m_defaultFalseValues = {
+      Settings::Gui::Autohide
+    , Settings::Gui::AutoStartCore
+    , Settings::Gui::ShownFirstConnectedMessage
+    , Settings::Gui::ShownServerFirstStartMessage
+    , Settings::Gui::ShowVersionInTitle
+    , Settings::Core::PreventSleep
+    , Settings::Core::UseWlClipboard
+    , Settings::Server::ExternalConfig
+    , Settings::Client::InvertYScroll
+    , Settings::Client::InvertXScroll
+    , Settings::Log::ToFile
+    , Settings::Log::GuiDebug
+  };
+
+  // When checking the default values this list contains the ones that default to true.
+  inline static const QStringList m_defaultTrueValues = {
+      Settings::Core::UseHooks
+    , Settings::Client::LanguageSync
+    , Settings::Gui::CloseToTray
+    , Settings::Gui::CloseReminder
+    , Settings::Gui::LogExpanded
+    , Settings::Gui::SymbolicTrayIcon
+    , Settings::Gui::ShowGenericClientFailureDialog
+    , Settings::Security::TlsEnabled
+    , Settings::Security::CheckPeers
+  };
+
+  // Settings saved in our State file
+  inline static const QStringList m_stateKeys = { Settings::Gui::WindowGeometry };
+
+  // Contains settings keys to be upgraded.
+  inline static const QMap<QString, QString> m_upgradedMap = {
+    /*             OLD KEY                        NEW KEY          */
+    {QStringLiteral("core/screenName"), Settings::Core::ComputerName}
   };
   // clang-format on
 };

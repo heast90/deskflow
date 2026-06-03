@@ -1,2 +1,3 @@
-Tests: deskflow-client.sh, deskflow-server.sh
-Depends: @builddeps@, deskflow
+Tests: deskflow.sh
+Depends: @builddeps@, deskflow, xvfb, xauth
+Restrictions: allow-stderr

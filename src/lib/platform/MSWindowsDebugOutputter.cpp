@@ -9,9 +9,10 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
-#include <string>
 
-void MSWindowsDebugOutputter::open(const char *title)
+#include <QString>
+
+void MSWindowsDebugOutputter::open(const QString &title)
 {
   // do nothing
 }
@@ -21,14 +22,10 @@ void MSWindowsDebugOutputter::close()
   // do nothing
 }
 
-void MSWindowsDebugOutputter::show(bool showIfEmpty)
+bool MSWindowsDebugOutputter::write(LogLevel level, const QString &msg)
 {
-  // do nothing
-}
-
-bool MSWindowsDebugOutputter::write(LogLevel level, const char *msg)
-{
-  OutputDebugString((std::string(msg) + "\n").c_str());
+  std::wstring out = msg.toStdWString() + L"\n";
+  OutputDebugString(out.c_str());
   return true;
 }
 

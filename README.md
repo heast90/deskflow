@@ -22,8 +22,14 @@ TLS encryption is enabled by default. Wayland is supported. Clipboard sharing is
 
 [![Downloads: Stable Release](https://img.shields.io/github/downloads/deskflow/deskflow/latest/total?style=for-the-badge&logo=github&label=Download%20Stable)](https://github.com/deskflow/deskflow/releases/latest)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[![Downloads: Continuous Build](https://img.shields.io/github/downloads/deskflow/deskflow/continuous/total?style=for-the-badge&logo=github&label=Download%20Continuous)](https://github.com/deskflow/deskflow/releases/continuous)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[![Download From Flathub](https://img.shields.io/flathub/downloads/org.deskflow.deskflow?style=for-the-badge&logo=flathub&label=Download%20from%20flathub)](https://flathub.org/apps/org.deskflow.deskflow)
 
+> [!NOTE]
+> On Windows, you will need to install the
+> [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version).  
+> Download latest: [`vc_redist.x64.exe`](https://aka.ms/vc14/vc_redist.x64.exe) [`vc_redist.arm64.exe`](https://aka.ms/vc14/vc_redist.arm64.exe)
+
 > [!TIP]
 > For macOS users, the easiest way to install and stay up to date is to use [Homebrew](https://brew.sh) with our [homebrew-tap](https://github.com/deskflow/homebrew-tap).
+> macOS reports unsigned apps as damaged. This occurs because we do not use an Apple certificate for notarization. Clear the quarantine attribute to run the app: `xattr -c Deskflow.app`
 
 To use Deskflow, download one of our [packages](https://github.com/deskflow/deskflow/releases), install `deskflow` (from your package repository), or [build it](https://github.com/deskflow/deskflow/wiki/Building) from source.
 
@@ -45,7 +51,7 @@ To use Deskflow, download one of our [packages](https://github.com/deskflow/desk
 
 ## Contribute
 
-[![Good first issues](https://img.shields.io/github/issues/deskflow/deskflow/good%20first%20issue?label=good%20first%20issues&color=%2344cc11)](https://github.com/deskflow/deskflow/labels/good%20first%20issue) [![Open bounty issues](https://img.shields.io/github/issues/deskflow/deskflow/%F0%9F%92%8E%20bounty?label=💎%20open%20bounty%20issues&color=%2344cc11)](https://github.com/deskflow/deskflow/issues?q=is%3Aissue%20state%3Aopen%20label%3A%22%F0%9F%92%8E%20bounty%22) [![Rewarded bounties](https://img.shields.io/github/issues-search/deskflow/deskflow?query=label%3A%22%F0%9F%92%B0%20rewarded%22&label=%F0%9F%92%B0%20rewarded%20bounties&color=yellow)](https://github.com/deskflow/deskflow/issues?q=label%3A%22%F0%9F%92%B0%20rewarded%22%20sort%3Aupdated-desc)
+[![Good first issues](https://img.shields.io/github/issues/deskflow/deskflow/good%20first%20issue?label=good%20first%20issues&color=%2344cc11)](https://github.com/deskflow/deskflow/labels/good%20first%20issue)
 
 There are many ways to contribute to the Deskflow project.
 
@@ -59,14 +65,9 @@ For instructions on building Deskflow, use the wiki page: [Building](https://git
 
 We support all major operating systems, including Windows, macOS, Linux, and Unix-like BSD-derived.
 
-> [!NOTE]
-> On Windows, you will need to install the
-> [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version).  
-> Download latest: [`vc_redist.x64.exe`](https://aka.ms/vs/17/release/vc_redist.x64.exe) [`vc_redist.arm64.exe`](https://aka.ms/vs/17/release/vc_redist.arm64.exe)
+Windows 10 v1809 or higher is required.
 
-Windows 10 or higher is required.
-
-macOS 12 or higher is required.
+macOS 13 or higher is required to use our CI builds for Apple Silicon machines. macOS 12 or higher is required for Intel macs or local builds.
 
 Linux requires libei 1.3+ and libportal 0.8+ for the server/client. Additionally, Qt 6.7+ is required for the GUI.
 Linux users with systems not meeting these requirements should use flatpak in place of a native package.
@@ -80,8 +81,6 @@ versions across them and gathering other information.
 
 [![Repology](https://repology.org/badge/vertical-allrepos/deskflow.svg?exclude_unsupported=1)](https://repology.org/project/deskflow/versions)
 
-**Note:** We are working with package maintainers to have our new package name adopted.
-
 ## Installing on macOS
 
 When you install Deskflow on macOS, you need to allow accessibility access (Privacy & Security) to both the `Deskflow` app and the `deskflow` process.
@@ -94,12 +93,12 @@ on the allowed list you will need to manually remove them before accessibility a
 
 macOS users who download directly from releases may need to run `xattr -c /Applications/Deskflow.app` after copying the app to the `Applications` dir.
 
-It is recommend to install Deskflow using [Homebrew](https://brew.sh) from our [homebrew-tap](https://github.com/deskflow/homebrew-tap)
+It is recommended to install Deskflow using [Homebrew](https://brew.sh) from our [homebrew-tap](https://github.com/deskflow/homebrew-tap)
 
 To add our tap, run:
 
 ```
-brew tap deskflow/homebrew-tap
+brew tap deskflow/tap
 ```
 
 Then install either:
@@ -115,11 +114,10 @@ mouse and keyboard sharing tools. We aim for idea sharing and interoperability.
 - [**Lan Mouse**](https://github.com/feschber/lan-mouse) -
   Rust implementation with the goal of having native front-ends and interoperability with
   Deskflow/Synergy.
-- [**Input Leap**](https://github.com/input-leap/input-leap) -
-  Deskflow/Synergy-derivative with the goal of continuing what Barrier started, after Barrier
-  became a dead fork.
 - [**Synergy**](https://symless.com/synergy) -
   Downstream commercial fork. Synergy sponsors Deskflow with financial support and contributes code ([learn more](https://github.com/deskflow/deskflow/wiki/Relationship-with-Synergy)).
+- [**Input Leap**](https://github.com/input-leap/input-leap) -
+  Inactive Deskflow/Synergy-derivative with the goal continuing Barrier development (now a dead fork).
 
 ## FAQ
 

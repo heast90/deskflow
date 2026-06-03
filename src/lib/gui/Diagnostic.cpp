@@ -35,6 +35,9 @@ void clearSettings(bool enableRestart)
   qDebug("clearing settings");
   Settings::proxy().clear();
 
+  // Reset the windowGeometry
+  Settings::setValue(Settings::Gui::WindowGeometry);
+
   // save but do not emit saving signal which will prevent the current state of
   // the app config and server configs from being applied.
   Settings::save(false);
@@ -44,11 +47,11 @@ void clearSettings(bool enableRestart)
   profileDir.removeRecursively();
 
 #ifdef Q_OS_WIN
-  if (Settings::isNativeMode()) {
+  if (Settings::isPortableMode()) {
     // make a new empty portable settings file
     if (profileDir.mkpath(Settings::settingsPath())) {
       QFile file(Settings::settingsFile());
-      file.open(QIODevice::WriteOnly);
+      std::ignore = file.open(QIODevice::WriteOnly);
       file.write(" ", 1);
       file.close();
     }

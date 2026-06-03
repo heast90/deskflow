@@ -7,12 +7,13 @@
 #include "Messages.h"
 
 #include "Logger.h"
-#include "Styles.h"
-#include "VersionInfo.h"
 
+#include "common/Enums.h"
 #include "common/Settings.h"
 #include "common/UrlConstants.h"
+#include "common/VersionInfo.h"
 
+#include <QCheckBox>
 #include <QMessageBox>
 #include <QPushButton>
 #include <memory>
@@ -40,10 +41,10 @@ void showErrorDialog(const QString &message, const QString &fileLine, QtMsgType 
   auto errorType = QtFatalMsg ? QObject::tr("fatal error") : QObject::tr("error");
   auto title = QStringLiteral("%1 %2").arg(kAppName, errorType);
   auto text = QObject::tr(
-                  R"(<p>Please <a href="%1" style="color: %2">report a bug</a>)"
-                  " and copy/paste the following error:</p><pre>v%3\n%4\n%5</pre>"
+                  R"(<p>Please <a href="%1">report a bug</a>)"
+                  " and copy/paste the following error:</p><pre>v%2\n%3\n%4</pre>"
   )
-                  .arg(kUrlHelp, kColorSecondary, kVersion, message, fileLine);
+                  .arg(kUrlHelp, kVersion, message, fileLine);
 
   if (type == QtFatalMsg) {
     text.prepend(QObject::tr("<p>Sorry, a fatal error has occurred and the application must now exit.</p>\n"));
@@ -89,7 +90,7 @@ QString fileLine(const QMessageLogContext &context)
 void messageHandler(QtMsgType type, const QMessageLogContext &context, const QString &message)
 {
   const auto fileLine = messages::fileLine(context);
-  Logger::instance().handleMessage(type, fileLine, message);
+  Logger::instance()->handleMessage(type, fileLine, message);
 
   if (type == QtFatalMsg || type == QtCriticalMsg) {
     showErrorDialog(message, fileLine, type);
@@ -120,9 +121,9 @@ void showCloseReminder(QWidget *parent)
   message.append(
       QObject::tr(
           "<p>On Linux systems using GNOME 3, the notification area might be disabled. "
-          R"(You may need to <a href="%1" %2>enable an extension</a> to see the %3 tray icon.</p>)"
+          R"(You may need to <a href="%1">enable an extension</a> to see the %2 tray icon.</p>)"
       )
-          .arg(kUrlGnomeTrayFix, kStyleLink, kAppName)
+          .arg(kUrlGnomeTrayFix, kAppName)
   );
 #endif
 
@@ -182,9 +183,11 @@ void showFirstConnectedMessage(QWidget *parent, bool closeToTray, bool enableSer
   QMessageBox::information(parent, title, message);
 }
 
-void showClientConnectError(QWidget *parent, ClientError error, const QString &address)
+void showClientConnectError(QWidget *parent, deskflow::client::ErrorType error, const QString &address)
 {
-  using enum ClientError;
+  using enum deskflow::client::ErrorType;
+  if (error == NoError)
+    return;
 
   auto message = QObject::tr("<p>Failed to connect to the server '%1'.</p>").arg(address);
 
@@ -213,13 +216,30 @@ void showClientConnectError(QWidget *parent, ClientError error, const QString &a
 
   auto title = QObject::tr("%1 Connection Error").arg(kAppName);
 
-  QMessageBox::warning(parent, title, message);
+  if (error != HostnameError) {
+    QMessageBox::warning(parent, title, message);
+    return;
+  }
+
+  auto dialog = QMessageBox(parent);
+  dialog.setWindowTitle(title);
+  dialog.setText(message);
+  dialog.setWindowModality(Qt::ApplicationModal);
+  dialog.setIcon(QMessageBox::Information);
+
+  auto cbNoShowAgain = new QCheckBox(QObject::tr("Do not show this message again"));
+
+  QObject::connect(cbNoShowAgain, &QCheckBox::toggled, [](bool enabled) {
+    Settings::setValue(Settings::Gui::ShowGenericClientFailureDialog, !enabled);
+  });
+
+  dialog.setCheckBox(cbNoShowAgain);
+  dialog.setDefaultButton(QMessageBox::Ok);
+  dialog.exec();
 }
 
-NewClientPromptResult showNewClientPrompt(QWidget *parent, const QString &clientName, bool serverRequiresPeerAuth)
+bool showNewClientPrompt(QWidget *parent, const QString &clientName, bool serverRequiresPeerAuth)
 {
-  using enum NewClientPromptResult;
-
   if (serverRequiresPeerAuth) {
     // When peer auth is enabled you will be prompted to allow the connection before seeing this dialog.
     // This is why we do not show a dialog with an option to ignore the new client
@@ -228,22 +248,14 @@ NewClientPromptResult showNewClientPrompt(QWidget *parent, const QString &client
         QObject::tr("A new client called '%1' has been accepted. You'll need to add it to your server's screen layout.")
             .arg(clientName)
     );
-    return Add;
-  } else {
-    QMessageBox message(parent);
-    const QPushButton *ignore = message.addButton(QObject::tr("Ignore"), QMessageBox::RejectRole);
-    const QPushButton *add = message.addButton(QObject::tr("Add client"), QMessageBox::AcceptRole);
-    message.setText(QObject::tr("A new client called '%1' wants to connect").arg(clientName));
-    message.exec();
-    if (message.clickedButton() == add) {
-      return Add;
-    } else if (message.clickedButton() == ignore) {
-      return Ignore;
-    } else {
-      qFatal("no expected dialog button was clicked");
-      abort();
-    }
+    return true;
   }
+  QMessageBox message(parent);
+  message.addButton(QObject::tr("Ignore"), QMessageBox::RejectRole);
+  message.addButton(QObject::tr("Add client"), QMessageBox::AcceptRole);
+  message.setText(QObject::tr("A new client called '%1' wants to connect").arg(clientName));
+  message.exec();
+  return message.buttonRole(message.clickedButton()) == QMessageBox::AcceptRole;
 }
 
 bool showClearSettings(QWidget *parent)
@@ -279,10 +291,10 @@ void showWaylandLibraryError(QWidget *parent)
           "<p>Please either switch to X from your login screen or use a build "
           "that uses the correct libraries.</p>"
           "<p>If you think this is incorrect, please "
-          R"(<a href="%2" style="color: %3">report a bug</a>.</p>)"
+          R"(<a href="%2">report a bug</a>.</p>)"
           "<p>Please check the logs for more information.</p>"
       )
-          .arg(kAppName, kUrlHelp, kColorSecondary)
+          .arg(kAppName, kUrlHelp)
   );
 }
 
@@ -297,7 +309,7 @@ bool showUpdateCheckOption(QWidget *parent)
           "<p>Checking for updates requires an Internet connection.</p>"
           "<p>URL: <pre>%2</pre></p>"
       )
-          .arg(kAppName, Settings::value(Settings::Core::UpdateUrl).toString())
+          .arg(kAppName, Settings::value(Settings::Gui::UpdateCheckUrl).toString())
   );
 
   message.exec();

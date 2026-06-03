@@ -7,29 +7,28 @@
  */
 
 #include "ServerConfigDialog.h"
+#include "common/PlatformInfo.h"
 #include "ui_ServerConfigDialog.h"
 
+#include "base/NetworkProtocol.h"
 #include "common/Constants.h"
 #include "dialogs/ActionDialog.h"
 #include "dialogs/HotkeyDialog.h"
 #include "dialogs/ScreenSettingsDialog.h"
 
-#include "ServerConfig.h"
-
 #include <QFileDialog>
 #include <QMessageBox>
 
 using enum ScreenConfig::SwitchCorner;
-using ServerProtocol = deskflow::gui::ServerProtocol;
 
 ServerConfigDialog::ServerConfigDialog(QWidget *parent, ServerConfig &config)
     : QDialog(parent, Qt::WindowTitleHint | Qt::WindowSystemMenuHint),
       ui{std::make_unique<Ui::ServerConfigDialog>()},
-      m_OriginalServerConfig(config),
-      m_OriginalServerConfigIsExternal(config.useExternalConfig()),
-      m_OriginalServerConfigUsesExternalFile(config.configFile()),
-      m_ServerConfig(config),
-      m_ScreenSetupModel(serverConfig().screens(), serverConfig().numColumns(), serverConfig().numRows())
+      m_originalServerConfig(config),
+      m_originalServerConfigIsExternal(config.useExternalConfig()),
+      m_originalServerConfigUsesExternalFile(config.configFile()),
+      m_serverConfig(config),
+      m_screenSetupModel(m_serverConfig.screens(), m_serverConfig.numColumns(), m_serverConfig.numRows())
 {
   ui->setupUi(this);
 
@@ -67,8 +66,8 @@ ServerConfigDialog::ServerConfigDialog(QWidget *parent, ServerConfig &config)
   ui->btnBrowseConfigFile->setIcon(QIcon::fromTheme(QIcon::ThemeIcon::DocumentOpen));
   ui->lineConfigFile->setText(serverConfig().configFile());
 
-  ui->rbProtocolSynergy->setChecked(serverConfig().protocol() == ServerProtocol::kSynergy);
-  ui->rbProtocolBarrier->setChecked(serverConfig().protocol() == ServerProtocol::kBarrier);
+  ui->rbProtocolSynergy->setChecked(serverConfig().protocol() == NetworkProtocol::Synergy);
+  ui->rbProtocolBarrier->setChecked(serverConfig().protocol() == NetworkProtocol::Barrier);
   connect(ui->rbProtocolBarrier, &QRadioButton::toggled, this, &ServerConfigDialog::toggleProtocol);
 
   ui->cbHeartbeat->setChecked(serverConfig().hasHeartbeat());
@@ -80,9 +79,9 @@ ServerConfigDialog::ServerConfigDialog(QWidget *parent, ServerConfig &config)
 
   ui->cbRelativeMouseMoves->setChecked(serverConfig().relativeMouseMoves());
 
-#ifndef Q_OS_WIN
-  ui->cbWin32KeepForeground->setVisible(false);
-#endif
+  if (!deskflow::platform::isWindows())
+    ui->cbWin32KeepForeground->setVisible(false);
+
   ui->cbWin32KeepForeground->setChecked(serverConfig().win32KeepForeground());
   connect(ui->cbWin32KeepForeground, &QCheckBox::toggled, this, &ServerConfigDialog::toggleWin32Foreground);
 
@@ -137,6 +136,11 @@ ServerConfigDialog::ServerConfigDialog(QWidget *parent, ServerConfig &config)
 
   ui->sbSwitchCornerSize->setValue(serverConfig().switchCornerSize());
 
+  ui->cbDefaultLockToScreenState->setChecked(serverConfig().defaultLockToScreenState());
+  connect(
+      ui->cbDefaultLockToScreenState, &QCheckBox::toggled, this, &ServerConfigDialog::toggleDefaultLockToScreenState
+  );
+
   ui->cbDisableLockToScreen->setChecked(serverConfig().disableLockToScreen());
   connect(ui->cbDisableLockToScreen, &QCheckBox::toggled, this, &ServerConfigDialog::toggleLockToScreen);
 
@@ -148,10 +152,10 @@ ServerConfigDialog::ServerConfigDialog(QWidget *parent, ServerConfig &config)
   for (const Hotkey &hotkey : std::as_const(serverConfig().hotkeys()))
     ui->listHotkeys->addItem(hotkey.text());
 
-  ui->screenSetupView->setModel(&m_ScreenSetupModel);
+  ui->screenSetupView->setModel(&m_screenSetupModel);
 
   auto &screens = serverConfig().screens();
-  auto server = std::find_if(screens.begin(), screens.end(), [this](const Screen &screen) {
+  auto server = std::ranges::find_if(screens, [this](const Screen &screen) {
     return (screen.name() == serverConfig().getServerName());
   });
 
@@ -166,7 +170,7 @@ ServerConfigDialog::ServerConfigDialog(QWidget *parent, ServerConfig &config)
   onChange();
 
   // computers
-  connect(&m_ScreenSetupModel, &ScreenSetupModel::screensChanged, this, &ServerConfigDialog::onChange);
+  connect(&m_screenSetupModel, &ScreenSetupModel::screensChanged, this, &ServerConfigDialog::onChange);
 }
 
 ServerConfigDialog::~ServerConfigDialog() = default;
@@ -198,8 +202,8 @@ void ServerConfigDialog::accept()
 
 void ServerConfigDialog::reject()
 {
-  serverConfig().setUseExternalConfig(m_OriginalServerConfigIsExternal);
-  serverConfig().setConfigFile(m_OriginalServerConfigUsesExternalFile);
+  serverConfig().setUseExternalConfig(m_originalServerConfigIsExternal);
+  serverConfig().setConfigFile(m_originalServerConfigUsesExternalFile);
 
   QDialog::reject();
 }
@@ -245,7 +249,7 @@ void ServerConfigDialog::removeHotkey()
   onChange();
 }
 
-void ServerConfigDialog::listHotkeysSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected)
+void ServerConfigDialog::listHotkeysSelectionChanged(const QItemSelection &selected, const QItemSelection &)
 {
   bool itemsSelected = !selected.isEmpty();
   ui->btnEditHotkey->setEnabled(itemsSelected);
@@ -325,7 +329,7 @@ void ServerConfigDialog::toggleClipboard(bool enabled)
 {
   ui->sbClipboardSizeLimit->setEnabled(enabled);
   if (enabled && !ui->sbClipboardSizeLimit->value()) {
-    auto size = static_cast<int>((serverConfig().defaultClipboardSharingSize() + 512) / 1024);
+    auto size = static_cast<int>((ServerConfig::defaultClipboardSharingSize() + 512) / 1024);
     ui->sbClipboardSizeLimit->setValue(size ? size : 1);
   }
   serverConfig().setClipboardSharing(enabled);
@@ -359,7 +363,7 @@ void ServerConfigDialog::toggleRelativeMouseMoves(bool enabled)
 
 void ServerConfigDialog::toggleProtocol()
 {
-  ServerProtocol proto = ui->rbProtocolBarrier->isChecked() ? ServerProtocol::kBarrier : ServerProtocol::kSynergy;
+  auto proto = ui->rbProtocolBarrier->isChecked() ? NetworkProtocol::Barrier : NetworkProtocol::Synergy;
   serverConfig().setProtocol(proto);
   onChange();
 }
@@ -394,7 +398,7 @@ void ServerConfigDialog::toggleCornerTopRight(bool enable)
   onChange();
 }
 
-void ServerConfigDialog::listActionsSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected)
+void ServerConfigDialog::listActionsSelectionChanged(const QItemSelection &selected, const QItemSelection &)
 {
   bool enabled = !selected.isEmpty();
   ui->btnEditAction->setEnabled(enabled);
@@ -424,6 +428,12 @@ void ServerConfigDialog::toggleSwitchDelay(bool enable)
 void ServerConfigDialog::setSwitchDelay(int delay)
 {
   serverConfig().setSwitchDelay(delay);
+  onChange();
+}
+
+void ServerConfigDialog::toggleDefaultLockToScreenState(bool state)
+{
+  serverConfig().setDefaultLockToScreenState(state);
   onChange();
 }
 
@@ -463,15 +473,12 @@ void ServerConfigDialog::toggleExternalConfig(bool checked)
 
 bool ServerConfigDialog::browseConfigFile()
 {
-#if defined(Q_OS_WIN)
-  static const auto configExt = QStringLiteral("sgc");
-#else
-  static const auto configExt = QStringLiteral("conf");
-#endif
-  static const auto deskflowConfigFilter = QStringLiteral("%1 Configurations (*.%2);;All files (*.*)");
+  //: %1 is replaced with the application names
+  //: (*.conf) and (*.*) should not be translated
+  const auto deskflowConfigFilter = tr("%1 Configurations (*.conf);;All files (*.*)");
 
   QString fileName =
-      QFileDialog::getOpenFileName(this, "Browse for a config file", "", deskflowConfigFilter.arg(kAppName, configExt));
+      QFileDialog::getOpenFileName(this, tr("Browse for a config file"), "", deskflowConfigFilter.arg(kAppName));
 
   if (!fileName.isEmpty()) {
     ui->lineConfigFile->setText(fileName);
@@ -499,8 +506,8 @@ bool ServerConfigDialog::addComputer(const QString &clientName, bool doSilent)
 
 void ServerConfigDialog::onChange()
 {
-  bool isAppConfigDataEqual = m_OriginalServerConfigIsExternal == serverConfig().useExternalConfig() &&
-                              m_OriginalServerConfigUsesExternalFile == serverConfig().configFile();
+  bool isAppConfigDataEqual = m_originalServerConfigIsExternal == serverConfig().useExternalConfig() &&
+                              m_originalServerConfigUsesExternalFile == serverConfig().configFile();
   ui->buttonBox->button(QDialogButtonBox::Ok)
-      ->setEnabled(!isAppConfigDataEqual || !(m_OriginalServerConfig == m_ServerConfig));
+      ->setEnabled(!isAppConfigDataEqual || !(m_originalServerConfig == m_serverConfig));
 }

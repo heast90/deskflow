@@ -6,9 +6,9 @@
  */
 
 #include "base/Unicode.h"
-#include "arch/Arch.h"
 
-using enum ArchString::EWideCharEncoding;
+#include <assert.h>
+
 //
 // local utility functions
 //
@@ -113,29 +113,6 @@ std::string Unicode::UTF8ToUCS2(const std::string &src, bool *errors)
   return dst;
 }
 
-std::string Unicode::UTF8ToUCS4(const std::string &src, bool *errors)
-{
-  // default to success
-  resetError(errors);
-
-  // get size of input string and reserve some space in output
-  auto n = (uint32_t)src.size();
-  std::string dst;
-  dst.reserve(4 * n);
-
-  // convert each character
-  const auto *data = reinterpret_cast<const uint8_t *>(src.c_str());
-  while (n > 0) {
-    uint32_t c = fromUTF8(data, n);
-    if (c == s_invalid) {
-      c = s_replacement;
-    }
-    dst.append(reinterpret_cast<const char *>(&c), 4);
-  }
-
-  return dst;
-}
-
 std::string Unicode::UTF8ToUTF16(const std::string &src, bool *errors)
 {
   // default to success
@@ -171,54 +148,6 @@ std::string Unicode::UTF8ToUTF16(const std::string &src, bool *errors)
   return dst;
 }
 
-std::string Unicode::UTF8ToUTF32(const std::string &src, bool *errors)
-{
-  // default to success
-  resetError(errors);
-
-  // get size of input string and reserve some space in output
-  auto n = (uint32_t)src.size();
-  std::string dst;
-  dst.reserve(4 * n);
-
-  // convert each character
-  const auto *data = reinterpret_cast<const uint8_t *>(src.c_str());
-  while (n > 0) {
-    uint32_t c = fromUTF8(data, n);
-    if (c == s_invalid) {
-      c = s_replacement;
-    } else if (c >= 0x00110000) {
-      setError(errors);
-      c = s_replacement;
-    }
-    dst.append(reinterpret_cast<const char *>(&c), 4);
-  }
-
-  return dst;
-}
-
-std::string Unicode::UTF8ToText(const std::string &src, bool *errors)
-{
-  // default to success
-  resetError(errors);
-
-  // convert to wide char
-  uint32_t size;
-  wchar_t *tmp = UTF8ToWideChar(src, size, errors);
-
-  // convert string to multibyte
-  int len = ARCH->convStringWCToMB(nullptr, tmp, size, errors);
-  auto *mbs = new char[len + 1];
-  ARCH->convStringWCToMB(mbs, tmp, size, errors);
-  std::string text(mbs, len);
-
-  // clean up
-  delete[] mbs;
-  delete[] tmp;
-
-  return text;
-}
-
 std::string Unicode::UCS2ToUTF8(const std::string_view &src, bool *errors)
 {
   // default to success
@@ -229,16 +158,6 @@ std::string Unicode::UCS2ToUTF8(const std::string_view &src, bool *errors)
   return doUCS2ToUTF8(reinterpret_cast<const uint8_t *>(src.data()), n, errors);
 }
 
-std::string Unicode::UCS4ToUTF8(const std::string_view &src, bool *errors)
-{
-  // default to success
-  resetError(errors);
-
-  // convert
-  uint32_t n = (uint32_t)src.size() >> 2;
-  return doUCS4ToUTF8(reinterpret_cast<const uint8_t *>(src.data()), n, errors);
-}
-
 std::string Unicode::UTF16ToUTF8(const std::string_view &src, bool *errors)
 {
   // default to success
@@ -247,99 +166,6 @@ std::string Unicode::UTF16ToUTF8(const std::string_view &src, bool *errors)
   // convert
   uint32_t n = (uint32_t)src.size() >> 1;
   return doUTF16ToUTF8(reinterpret_cast<const uint8_t *>(src.data()), n, errors);
-}
-
-std::string Unicode::UTF32ToUTF8(const std::string_view &src, bool *errors)
-{
-  // default to success
-  resetError(errors);
-
-  // convert
-  uint32_t n = (uint32_t)src.size() >> 2;
-  return doUTF32ToUTF8(reinterpret_cast<const uint8_t *>(src.data()), n, errors);
-}
-
-std::string Unicode::textToUTF8(const std::string &src, bool *errors, ArchString::EWideCharEncoding encoding)
-{
-  // default to success
-  resetError(errors);
-
-  // convert string to wide characters
-  auto n = (uint32_t)src.size();
-  int len = ARCH->convStringMBToWC(nullptr, src.c_str(), n, errors);
-  auto *wcs = new wchar_t[len + 1];
-  ARCH->convStringMBToWC(wcs, src.c_str(), n, errors);
-
-  // convert to UTF8
-  std::string utf8 = wideCharToUTF8(wcs, len, errors, encoding);
-
-  // clean up
-  delete[] wcs;
-
-  return utf8;
-}
-
-wchar_t *Unicode::UTF8ToWideChar(const std::string &src, uint32_t &size, bool *errors)
-{
-  // convert to platform's wide character encoding
-  std::string tmp;
-  switch (ARCH->getWideCharEncoding()) {
-  case kUCS2:
-    tmp = UTF8ToUCS2(src, errors);
-    size = (uint32_t)tmp.size() >> 1;
-    break;
-
-  case kUCS4:
-    tmp = UTF8ToUCS4(src, errors);
-    size = (uint32_t)tmp.size() >> 2;
-    break;
-
-  case kUTF16:
-    tmp = UTF8ToUTF16(src, errors);
-    size = (uint32_t)tmp.size() >> 1;
-    break;
-
-  case kUTF32:
-    tmp = UTF8ToUTF32(src, errors);
-    size = (uint32_t)tmp.size() >> 2;
-    break;
-
-  default:
-    assert(0 && "unknown wide character encoding");
-  }
-
-  // copy to a wchar_t array
-  auto *dst = new wchar_t[size];
-  ::memcpy(dst, tmp.data(), sizeof(wchar_t) * size);
-  return dst;
-}
-
-std::string
-Unicode::wideCharToUTF8(const wchar_t *src, uint32_t size, bool *errors, ArchString::EWideCharEncoding encoding)
-{
-  if (encoding == kPlatformDetermined) {
-    encoding = ARCH->getWideCharEncoding();
-  }
-  // convert from platform's wide character encoding.
-  // note -- this must include a wide nul character (independent of
-  // the String's nul character).
-  switch (encoding) {
-  case kUCS2:
-    return doUCS2ToUTF8(reinterpret_cast<const uint8_t *>(src), size, errors);
-
-  case kUCS4:
-    return doUCS4ToUTF8(reinterpret_cast<const uint8_t *>(src), size, errors);
-
-  case kUTF16:
-    return doUTF16ToUTF8(reinterpret_cast<const uint8_t *>(src), size, errors);
-
-  case kUTF32:
-    return doUTF32ToUTF8(reinterpret_cast<const uint8_t *>(src), size, errors);
-
-  default:
-    assert(0 && "unknown wide character encoding");
-    return std::string();
-  }
 }
 
 std::string Unicode::doUCS2ToUTF8(const uint8_t *data, uint32_t n, bool *errors)
@@ -378,42 +204,6 @@ std::string Unicode::doUCS2ToUTF8(const uint8_t *data, uint32_t n, bool *errors)
   return dst;
 }
 
-std::string Unicode::doUCS4ToUTF8(const uint8_t *data, uint32_t n, bool *errors)
-{
-  // make some space
-  std::string dst;
-  dst.reserve(n);
-
-  // check if first character is 0xfffe or 0xfeff
-  bool byteSwapped = false;
-  if (n >= 1) {
-    switch (decode32(data, false)) {
-    case 0x0000feff:
-      data += 4;
-      --n;
-      break;
-
-    case 0x0000fffe:
-      byteSwapped = true;
-      data += 4;
-      --n;
-      break;
-
-    default:
-      break;
-    }
-  }
-
-  // convert each character
-  for (; n > 0; --n) {
-    auto c = decode32(data, byteSwapped);
-    toUTF8(dst, c, errors);
-    data += 4;
-  }
-
-  return dst;
-}
-
 std::string Unicode::doUTF16ToUTF8(const uint8_t *data, uint32_t n, bool *errors)
 {
   // make some space
@@ -439,7 +229,9 @@ std::string Unicode::doUTF16ToUTF8(const uint8_t *data, uint32_t n, bool *errors
       break;
     }
   }
-
+#ifdef WORDS_BIGENDIAN
+  byteSwapped = !byteSwapped;
+#endif
   // convert each character
   while (n > 0) {
     if (uint32_t c = decode16(data, byteSwapped); c < 0x0000d800 || c > 0x0000dfff) {
@@ -466,46 +258,6 @@ std::string Unicode::doUTF16ToUTF8(const uint8_t *data, uint32_t n, bool *errors
     }
     data += 2;
     --n;
-  }
-
-  return dst;
-}
-
-std::string Unicode::doUTF32ToUTF8(const uint8_t *data, uint32_t n, bool *errors)
-{
-  // make some space
-  std::string dst;
-  dst.reserve(n);
-
-  // check if first character is 0xfffe or 0xfeff
-  bool byteSwapped = false;
-  if (n >= 1) {
-    switch (decode32(data, false)) {
-    case 0x0000feff:
-      data += 4;
-      --n;
-      break;
-
-    case 0x0000fffe:
-      byteSwapped = true;
-      data += 4;
-      --n;
-      break;
-
-    default:
-      break;
-    }
-  }
-
-  // convert each character
-  for (; n > 0; --n) {
-    auto c = decode32(data, byteSwapped);
-    if (c >= 0x00110000) {
-      setError(errors);
-      c = s_replacement;
-    }
-    toUTF8(dst, c, errors);
-    data += 4;
   }
 
   return dst;

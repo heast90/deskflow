@@ -8,7 +8,6 @@
 
 #pragma once
 
-#include "base/Event.h"
 #include "deskflow/ClipboardTypes.h"
 #include "deskflow/KeyTypes.h"
 #include "deskflow/languages/LanguageManager.h"
@@ -98,7 +97,7 @@ private:
   void infoAcknowledgment();
   void secureInputNotification();
   void setServerLanguages();
-  void setActiveServerLanguage(const std::string &language);
+  void setActiveServerLanguage(const std::string_view &language);
   void checkMissedLanguages() const;
 
 private:

@@ -1,6 +1,6 @@
-# SPDX-FileCopyrightText: 2024 Deskflow Developers
-# SPDX-FileCopyrightText: 2012 - 2024 Symless Ltd
-# SPDX-FileCopyrightText: 2009 - 2012 Nick Bolton
+# SPDX-FileCopyrightText: (C) 2024 Deskflow Developers
+# SPDX-FileCopyrightText: (C) 2012 - 2024 Symless Ltd
+# SPDX-FileCopyrightText: (C) 2009 - 2012 Nick Bolton
 # SPDX-License-Identifier: MIT
 
 if(UNIX AND NOT APPLE)
@@ -28,18 +28,15 @@ function(generate_app_man TARGET NAME)
   endif()
 endfunction()
 
-option(BUILD_UNIFIED "Build unified binary" OFF)
-if(BUILD_UNIFIED)
-  add_subdirectory(deskflow-core)
-else()
-  add_subdirectory(deskflow-client)
-  add_subdirectory(deskflow-server)
-endif(BUILD_UNIFIED)
+set(WIN32_PRE_EXCLUDE_REGEXES
+  "api-ms-win-.*"
+  "ext-ms-.*"
+  "^hvsifiletrust\\.dll$"
+  "^icu.*\\.dll$"
+)
 
-## Only used on windows
-add_subdirectory(deskflow-daemon)
+set(WIN32_POST_EXCLUDE_REGEXES ".*system32.*")
 
-option(BUILD_GUI "Build GUI" ON)
-if(BUILD_GUI)
-  add_subdirectory(deskflow-gui)
-endif(BUILD_GUI)
+add_subdirectory(deskflow-core)
+add_subdirectory(deskflow-daemon) #Only used on windows
+add_subdirectory(deskflow-gui)

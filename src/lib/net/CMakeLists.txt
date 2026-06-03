@@ -1,6 +1,6 @@
-# SPDX-FileCopyrightText: 2024 - 2025 Chris Rizzitello <sithlord48@gmail.com>
-# SPDX-FileCopyrightText: 2012 - 2024 Symless Ltd
-# SPDX-FileCopyrightText: 2009 - 2012 Nick Bolton
+# SPDX-FileCopyrightText: (C) 2024 - 2025 Chris Rizzitello <sithlord48@gmail.com>
+# SPDX-FileCopyrightText: (C) 2012 - 2024 Symless Ltd
+# SPDX-FileCopyrightText: (C) 2009 - 2012 Nick Bolton
 # SPDX-License-Identifier: MIT
 
 # Apple has to use static libraries because "Use of the Apple-provided OpenSSL
@@ -10,6 +10,7 @@ if(APPLE)
   set(OPENSSL_USE_STATIC_LIBS TRUE)
 endif()
 
+find_package(Qt6 ${REQUIRED_QT_VERSION} REQUIRED COMPONENTS Network)
 find_package(OpenSSL ${REQUIRED_OPENSSL_VERSION} REQUIRED COMPONENTS SSL Crypto)
 
 add_library(net STATIC
@@ -30,6 +31,8 @@ add_library(net STATIC
   SecurityLevel.h
   SecureSocket.cpp
   SecureSocket.h
+  SocketException.cpp
+  SocketException.h
   SocketMultiplexer.cpp
   SocketMultiplexer.h
   SecureUtils.cpp
@@ -43,13 +46,11 @@ add_library(net STATIC
   TCPSocketFactory.cpp
   TCPSocketFactory.h
   TSocketMultiplexerMethodJob.h
-  XSocket.cpp
-  XSocket.h
 )
 
 target_link_libraries(
   net
-  PUBLIC OpenSSL::SSL OpenSSL::Crypto common
+  PUBLIC OpenSSL::SSL OpenSSL::Crypto Qt6::Network common
   PRIVATE mt io)
 
 if(WIN32)

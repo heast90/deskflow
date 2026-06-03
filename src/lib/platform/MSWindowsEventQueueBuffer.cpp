@@ -1,5 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2012 - 2016 Symless Ltd.
  * SPDX-FileCopyrightText: (C) 2004 Chris Schoeneman
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
@@ -7,17 +8,8 @@
 
 #include "platform/MSWindowsEventQueueBuffer.h"
 
-#include "arch/win32/ArchMiscWindows.h"
+#include "arch/win32/ArchDaemonWindows.h"
 #include "base/IEventQueue.h"
-#include "mt/Thread.h"
-
-//
-// EventQueueTimer
-//
-
-class EventQueueTimer
-{
-};
 
 //
 // MSWindowsEventQueueBuffer
@@ -29,10 +21,10 @@ MSWindowsEventQueueBuffer::MSWindowsEventQueueBuffer(IEventQueue *events) : m_ev
   m_thread = GetCurrentThreadId();
 
   // create a message type for custom events
-  m_userEvent = RegisterWindowMessage("DESKFLOW_USER_EVENT");
+  m_userEvent = RegisterWindowMessage(L"DESKFLOW_USER_EVENT");
 
   // get message type for daemon quit
-  m_daemonQuit = ArchMiscWindows::getDaemonQuitMessage();
+  m_daemonQuit = ArchDaemonWindows::getDaemonQuitMessage();
 
   // make sure this thread has a message queue
   MSG dummy;
@@ -45,7 +37,7 @@ void MSWindowsEventQueueBuffer::waitForEvent(double timeout)
   // MsgWaitForMultipleObjects() will block even if the queue isn't
   // empty if the messages in the queue were there before the last
   // call to GetMessage()/PeekMessage().
-  if (HIWORD(GetQueueStatus(QS_ALLPOSTMESSAGE)) != 0) {
+  if (HIWORD(GetQueueStatus(m_supportedMessages)) != 0) {
     return;
   }
 
@@ -61,13 +53,13 @@ void MSWindowsEventQueueBuffer::waitForEvent(double timeout)
   // cancellation but that's okay because we're run in the main
   // thread and we never cancel that thread.
   HANDLE dummy[1];
-  MsgWaitForMultipleObjects(0, dummy, FALSE, t, QS_ALLPOSTMESSAGE);
+  MsgWaitForMultipleObjects(0, dummy, FALSE, t, m_supportedMessages);
 }
 
 IEventQueueBuffer::Type MSWindowsEventQueueBuffer::getEvent(Event &event, uint32_t &dataID)
 {
   using enum IEventQueueBuffer::Type;
-  // NOTE: QS_ALLINPUT was replaced with QS_ALLPOSTMESSAGE.
+  // NOTE: QS_ALLINPUT was replaced with m_supportedMessages.
   //
   // peek at messages first.  waiting for QS_ALLINPUT will return
   // if a message has been sent to our window but GetMessage will
@@ -103,15 +95,5 @@ bool MSWindowsEventQueueBuffer::addEvent(uint32_t dataID)
 
 bool MSWindowsEventQueueBuffer::isEmpty() const
 {
-  return (HIWORD(GetQueueStatus(QS_ALLPOSTMESSAGE)) == 0);
-}
-
-EventQueueTimer *MSWindowsEventQueueBuffer::newTimer(double, bool) const
-{
-  return new EventQueueTimer;
-}
-
-void MSWindowsEventQueueBuffer::deleteTimer(EventQueueTimer *timer) const
-{
-  delete timer;
+  return (HIWORD(GetQueueStatus(m_supportedMessages)) == 0);
 }

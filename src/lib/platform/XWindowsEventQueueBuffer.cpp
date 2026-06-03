@@ -1,5 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2012 - 2016 Symless Ltd.
  * SPDX-FileCopyrightText: (C) 2004 Chris Schoeneman
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
@@ -16,21 +17,13 @@
 #include <unistd.h>
 
 //
-// EventQueueTimer
-//
-
-class EventQueueTimer
-{
-};
-
-//
 // XWindowsEventQueueBuffer
 //
 
 XWindowsEventQueueBuffer::XWindowsEventQueueBuffer(Display *display, Window window, IEventQueue *events)
-    : m_events(events),
-      m_display(display),
-      m_window(window)
+    : m_display(display),
+      m_window(window),
+      m_events(events)
 {
   assert(m_display != nullptr);
   assert(m_window != None);
@@ -188,16 +181,6 @@ bool XWindowsEventQueueBuffer::isEmpty() const
 {
   std::scoped_lock lock{m_mutex};
   return (XPending(m_display) == 0);
-}
-
-EventQueueTimer *XWindowsEventQueueBuffer::newTimer(double, bool) const
-{
-  return new EventQueueTimer;
-}
-
-void XWindowsEventQueueBuffer::deleteTimer(EventQueueTimer *timer) const
-{
-  delete timer;
 }
 
 void XWindowsEventQueueBuffer::flush()

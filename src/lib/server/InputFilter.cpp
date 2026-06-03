@@ -13,6 +13,7 @@
 #include "server/PrimaryClient.h"
 #include "server/Server.h"
 
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 
@@ -99,12 +100,12 @@ void InputFilter::KeystrokeCondition::disablePrimary(PrimaryClient *primary)
   m_id = 0;
 }
 
-InputFilter::MouseButtonCondition::MouseButtonCondition(IEventQueue *events, IPlatformScreen::ButtonInfo *info)
-    : m_button(info->m_button),
-      m_mask(info->m_mask),
+InputFilter::MouseButtonCondition::MouseButtonCondition(IEventQueue *events, const IPlatformScreen::ButtonInfo &info)
+    : m_button(info.m_button),
+      m_mask(info.m_mask),
       m_events(events)
 {
-  free(info);
+  // do nothing
 }
 
 InputFilter::MouseButtonCondition::MouseButtonCondition(IEventQueue *events, ButtonID button, KeyModifierMask mask)
@@ -230,13 +231,13 @@ void InputFilter::LockCursorToScreenAction::perform(const Event &event)
   };
 
   // send event
-  Server::LockCursorToScreenInfo *info = Server::LockCursorToScreenInfo::alloc(s_state[m_mode]);
+  auto *info = new Server::LockCursorToScreenInfo(s_state[m_mode]);
   m_events->addEvent(
       Event(EventTypes::ServerLockCursorToScreen, event.getTarget(), info, Event::EventFlags::DeliverImmediately)
   );
 }
 
-InputFilter::RestartServer::RestartServer(IEventQueue *events, Mode mode) : m_mode(mode), m_events(events)
+InputFilter::RestartServer::RestartServer(Mode mode) : m_mode(mode)
 {
   // do nothing
 }
@@ -258,7 +259,7 @@ std::string InputFilter::RestartServer::format() const
   return deskflow::string::sprintf("restartServer(%s)", s_mode[m_mode]);
 }
 
-void InputFilter::RestartServer::perform(const Event &event)
+void InputFilter::RestartServer::perform(const Event &)
 {
   // HACK Super hack we should gracefully exit
   exit(0);
@@ -297,7 +298,7 @@ void InputFilter::SwitchToScreenAction::perform(const Event &event)
   }
 
   // send event
-  Server::SwitchToScreenInfo *info = Server::SwitchToScreenInfo::alloc(screen);
+  auto *info = new Server::SwitchToScreenInfo(screen);
   m_events->addEvent(
       Event(EventTypes::ServerSwitchToScreen, event.getTarget(), info, Event::EventFlags::DeliverImmediately)
   );
@@ -329,9 +330,31 @@ std::string InputFilter::SwitchInDirectionAction::format() const
 
 void InputFilter::SwitchInDirectionAction::perform(const Event &event)
 {
-  Server::SwitchInDirectionInfo *info = Server::SwitchInDirectionInfo::alloc(m_direction);
+  auto *info = new Server::SwitchInDirectionInfo(m_direction);
   m_events->addEvent(
       Event(EventTypes::ServerSwitchInDirection, event.getTarget(), info, Event::EventFlags::DeliverImmediately)
+  );
+}
+
+InputFilter::SwitchToNextScreenAction::SwitchToNextScreenAction(IEventQueue *events) : m_events(events)
+{
+  // do nothing
+}
+
+InputFilter::Action *InputFilter::SwitchToNextScreenAction::clone() const
+{
+  return new SwitchToNextScreenAction(*this);
+}
+
+std::string InputFilter::SwitchToNextScreenAction::format() const
+{
+  return "switchToNextScreen()";
+}
+
+void InputFilter::SwitchToNextScreenAction::perform(const Event &event)
+{
+  m_events->addEvent(
+      Event(EventTypes::ServerToggleScreen, event.getTarget(), nullptr, Event::EventFlags::DeliverImmediately)
   );
 }
 
@@ -391,7 +414,7 @@ void InputFilter::KeyboardBroadcastAction::perform(const Event &event)
   };
 
   // send event
-  Server::KeyboardBroadcastInfo *info = Server::KeyboardBroadcastInfo::alloc(s_state[m_mode], m_screens);
+  auto *info = new Server::KeyboardBroadcastInfo(s_state[m_mode], m_screens);
   m_events->addEvent(
       Event(EventTypes::ServerKeyboardBroadcast, event.getTarget(), info, Event::EventFlags::DeliverImmediately)
   );
@@ -446,8 +469,8 @@ std::string InputFilter::KeystrokeAction::format() const
     );
   } else {
     return deskflow::string::sprintf(
-        "%s(%s,%.*s)", type, deskflow::KeyMap::formatKey(m_keyInfo->m_key, m_keyInfo->m_mask).c_str(),
-        strnlen(m_keyInfo->m_screens + 1, SIZE_MAX) - 1, m_keyInfo->m_screens + 1
+        "%s(%s,%s)", type, deskflow::KeyMap::formatKey(m_keyInfo->m_key, m_keyInfo->m_mask).c_str(),
+        m_keyInfo->m_screens.c_str()
     );
   }
 }
@@ -469,7 +492,9 @@ const char *InputFilter::KeystrokeAction::formatName() const
   return (m_press ? "keyDown" : "keyUp");
 }
 
-InputFilter::MouseButtonAction::MouseButtonAction(IEventQueue *events, IPlatformScreen::ButtonInfo *info, bool press)
+InputFilter::MouseButtonAction::MouseButtonAction(
+    IEventQueue *events, const IPlatformScreen::ButtonInfo &info, bool press
+)
     : m_buttonInfo(info),
       m_press(press),
       m_events(events)
@@ -477,12 +502,7 @@ InputFilter::MouseButtonAction::MouseButtonAction(IEventQueue *events, IPlatform
   // do nothing
 }
 
-InputFilter::MouseButtonAction::~MouseButtonAction()
-{
-  free(m_buttonInfo);
-}
-
-const IPlatformScreen::ButtonInfo *InputFilter::MouseButtonAction::getInfo() const
+const IPlatformScreen::ButtonInfo &InputFilter::MouseButtonAction::getInfo() const
 {
   return m_buttonInfo;
 }
@@ -494,16 +514,15 @@ bool InputFilter::MouseButtonAction::isOnPress() const
 
 InputFilter::Action *InputFilter::MouseButtonAction::clone() const
 {
-  IPlatformScreen::ButtonInfo *info = IPrimaryScreen::ButtonInfo::alloc(*m_buttonInfo);
-  return new MouseButtonAction(m_events, info, m_press);
+  return new MouseButtonAction(m_events, m_buttonInfo, m_press);
 }
 
 std::string InputFilter::MouseButtonAction::format() const
 {
   const char *type = formatName();
 
-  std::string key = deskflow::KeyMap::formatKey(kKeyNone, m_buttonInfo->m_mask);
-  return deskflow::string::sprintf("%s(%s%s%d)", type, key.c_str(), key.empty() ? "" : "+", m_buttonInfo->m_button);
+  std::string key = deskflow::KeyMap::formatKey(kKeyNone, m_buttonInfo.m_mask);
+  return deskflow::string::sprintf("%s(%s%s%d)", type, key.c_str(), key.empty() ? "" : "+", m_buttonInfo.m_button);
 }
 
 void InputFilter::MouseButtonAction::perform(const Event &event)
@@ -512,16 +531,16 @@ void InputFilter::MouseButtonAction::perform(const Event &event)
   // send modifiers
   using enum EventTypes;
   IPlatformScreen::KeyInfo *modifierInfo = nullptr;
-  if (m_buttonInfo->m_mask != 0) {
+  if (m_buttonInfo.m_mask != 0) {
     KeyID key = m_press ? kKeySetModifiers : kKeyClearModifiers;
-    modifierInfo = IKeyState::KeyInfo::alloc(key, m_buttonInfo->m_mask, 0, 1);
+    modifierInfo = IKeyState::KeyInfo::alloc(key, m_buttonInfo.m_mask, 0, 1);
     m_events->addEvent(Event(KeyStateKeyDown, event.getTarget(), modifierInfo, Event::EventFlags::DeliverImmediately));
   }
 
   // send button
   EventTypes type = m_press ? PrimaryScreenButtonDown : PrimaryScreenButtonUp;
   m_events->addEvent(Event(
-      type, event.getTarget(), m_buttonInfo, Event::EventFlags::DeliverImmediately | Event::EventFlags::DontFreeData
+      type, event.getTarget(), &m_buttonInfo, Event::EventFlags::DeliverImmediately | Event::EventFlags::DontFreeData
   ));
 }
 
@@ -658,18 +677,18 @@ bool InputFilter::Rule::handleEvent(const Event &event)
 
   case Activate:
     actions = &m_activateActions;
-    LOG((CLOG_DEBUG1 "activate actions"));
+    LOG_DEBUG1("activate actions");
     break;
 
   case Deactivate:
     actions = &m_deactivateActions;
-    LOG((CLOG_DEBUG1 "deactivate actions"));
+    LOG_DEBUG1("deactivate actions");
     break;
   }
 
   // perform actions
   for (auto action : *actions) {
-    LOG((CLOG_DEBUG1 "hotkey: %s", action->format().c_str()));
+    LOG_DEBUG1("hotkey: %s", action->format().c_str());
     action->perform(event);
   }
 
@@ -868,14 +887,9 @@ bool InputFilter::operator==(const InputFilter &x) const
   for (auto i = x.m_ruleList.begin(); i != x.m_ruleList.end(); ++i) {
     bList.push_back(i->format());
   }
-  std::partial_sort(aList.begin(), aList.end(), aList.end());
-  std::partial_sort(bList.begin(), bList.end(), bList.end());
+  std::ranges::partial_sort(aList, aList.end());
+  std::ranges::partial_sort(bList, bList.end());
   return (aList == bList);
-}
-
-bool InputFilter::operator!=(const InputFilter &x) const
-{
-  return !operator==(x);
 }
 
 void InputFilter::handleEvent(const Event &event)
@@ -895,5 +909,5 @@ void InputFilter::handleEvent(const Event &event)
   }
 
   // not handled so pass through
-  m_events->addEvent(myEvent);
+  m_events->addEvent(std::move(myEvent));
 }

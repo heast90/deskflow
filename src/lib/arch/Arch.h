@@ -1,5 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2025 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2012 - 2016 Symless Ltd.
  * SPDX-FileCopyrightText: (C) 2002 Chris Schoeneman
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
@@ -24,9 +25,6 @@
 
 #pragma once
 
-#include "arch/ArchString.h"
-#include "common/Common.h"
-
 #if SYSAPI_WIN32
 
 #include "arch/win32/ArchDaemonWindows.h"
@@ -36,7 +34,7 @@
 
 #elif SYSAPI_UNIX
 
-#include "arch/unix/ArchDaemonUnix.h"
+#include "arch/ArchDaemonNone.h"
 #include "arch/unix/ArchLogUnix.h"
 #include "arch/unix/ArchMultithreadPosix.h"
 #include "arch/unix/ArchNetworkBSD.h"
@@ -59,19 +57,20 @@ to each method to those implementations.  Clients should use the
 exactly one of these objects before attempting to call any method,
 typically at the beginning of \c main().
 */
-class Arch : public ARCH_DAEMON, public ARCH_LOG, public ARCH_MULTITHREAD, public ARCH_NETWORK, public ArchString
+class Arch : public ARCH_DAEMON, public ARCH_LOG, public ARCH_MULTITHREAD, public ARCH_NETWORK
 {
 public:
   Arch();
-  explicit Arch(Arch *arch);
   ~Arch() override = default;
 
+#if SYSAPI_WIN32
   //! Call init on other arch classes.
   /*!
   Some arch classes depend on others to exist first. When init is called
   these classes will have ARCH available for use.
   */
   void init() override;
+#endif
 
   //
   // accessors
@@ -83,11 +82,6 @@ public:
   calling this function.
   */
   static Arch *getInstance();
-
-  static void setInstance(Arch *s)
-  {
-    s_instance = s;
-  }
 
   /**
    * @brief blocks calling thread for timout seconds

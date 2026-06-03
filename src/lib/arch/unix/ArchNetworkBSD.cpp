@@ -8,7 +8,7 @@
 #include "arch/unix/ArchNetworkBSD.h"
 
 #include "arch/Arch.h"
-#include "arch/XArch.h"
+#include "arch/ArchException.h"
 #include "arch/unix/ArchMultithreadPosix.h"
 #include "arch/unix/XArchUnix.h"
 
@@ -24,10 +24,6 @@
 #include <netinet/tcp.h>
 #endif
 
-#if !HAVE_INET_ATON
-#include <stdio.h>
-#endif
-
 static const int s_family[] = {
     PF_UNSPEC,
     PF_INET,
@@ -35,27 +31,6 @@ static const int s_family[] = {
 };
 
 static const int s_type[] = {SOCK_DGRAM, SOCK_STREAM};
-
-#if !HAVE_INET_ATON
-// parse dotted quad addresses.  we don't bother with the weird BSD'ism
-// of handling octal and hex and partial forms.
-static in_addr_t inet_aton(const char *cp, struct in_addr *inp)
-{
-  unsigned int a, b, c, d;
-  if (sscanf(cp, "%u.%u.%u.%u", &a, &b, &c, &d) != 4) {
-    return 0;
-  }
-  if (a >= 256 || b >= 256 || c >= 256 || d >= 256) {
-    return 0;
-  }
-  unsigned char *incp = (unsigned char *)inp;
-  incp[0] = (unsigned char)(a & 0xffu);
-  incp[1] = (unsigned char)(b & 0xffu);
-  incp[2] = (unsigned char)(c & 0xffu);
-  incp[3] = (unsigned char)(d & 0xffu);
-  return inp->s_addr;
-}
-#endif
 
 //
 // ArchNetworkBSD::Deps
@@ -104,6 +79,10 @@ ArchSocket ArchNetworkBSD::newSocket(AddressFamily family, SocketType type)
   }
   try {
     setBlockingOnSocket(fd, false);
+#if defined(__APPLE__)
+    int on = 1;
+    setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &on, sizeof(on));
+#endif
   } catch (...) {
     close(fd);
     throw;
@@ -221,6 +200,10 @@ ArchSocket ArchNetworkBSD::acceptSocket(ArchSocket s, ArchNetAddress *addr)
 
   try {
     setBlockingOnSocket(fd, false);
+#if defined(__APPLE__)
+    int on = 1;
+    setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &on, sizeof(on));
+#endif
   } catch (...) {
     close(fd);
     delete newSocket;
@@ -456,17 +439,6 @@ bool ArchNetworkBSD::setReuseAddrOnSocket(ArchSocket s, bool reuse)
   return (oflag != 0);
 }
 
-std::string ArchNetworkBSD::getHostName()
-{
-  char name[256];
-  if (gethostname(name, sizeof(name)) == -1) {
-    name[0] = '\0';
-  } else {
-    name[sizeof(name) - 1] = '\0';
-  }
-  return name;
-}
-
 ArchNetAddress ArchNetworkBSD::newAnyAddr(AddressFamily family)
 {
   using enum AddressFamily;
@@ -495,6 +467,7 @@ ArchNetAddress ArchNetworkBSD::newAnyAddr(AddressFamily family)
   }
   default:
     delete addr;
+    addr = nullptr;
     assert(0 && "invalid family");
   }
 
@@ -589,10 +562,13 @@ std::string ArchNetworkBSD::addrToString(ArchNetAddress addr)
 
   switch (getAddrFamily(addr)) {
   case INet: {
+    char strAddr[INET_ADDRSTRLEN];
     const auto *ipAddr = TYPED_ADDR(struct sockaddr_in, addr);
-    std::scoped_lock lock{m_mutex};
-    std::string s = inet_ntoa(ipAddr->sin_addr);
-    return s;
+    {
+      std::scoped_lock lock{m_mutex};
+      inet_ntop(AF_INET, &ipAddr->sin_addr, strAddr, INET_ADDRSTRLEN);
+    }
+    return strAddr;
   }
 
   case INet6: {
@@ -745,11 +721,11 @@ const int *ArchNetworkBSD::getUnblockPipeForThread(ArchThread thread)
   switch (err) {
   case EINTR:
     ARCH->testCancelThread();
-    throw XArchNetworkInterrupted(errorToString(err));
+    throw ArchNetworkInterruptedException(errorToString(err));
 
   case EACCES:
   case EPERM:
-    throw XArchNetworkAccess(errorToString(err));
+    throw ArchNetworkAccessException(errorToString(err));
 
   case ENFILE:
   case EMFILE:
@@ -760,7 +736,7 @@ const int *ArchNetworkBSD::getUnblockPipeForThread(ArchThread thread)
 #if defined(ENOSR)
   case ENOSR:
 #endif
-    throw XArchNetworkResource(errorToString(err));
+    throw ArchNetworkResourceException(errorToString(err));
 
   case EPROTOTYPE:
   case EPROTONOSUPPORT:
@@ -774,40 +750,40 @@ const int *ArchNetworkBSD::getUnblockPipeForThread(ArchThread thread)
 #if defined(ENOPKG)
   case ENOPKG:
 #endif
-    throw XArchNetworkSupport(errorToString(err));
+    throw ArchNetworkSupportException(errorToString(err));
 
   case EIO:
-    throw XArchNetworkIO(errorToString(err));
+    throw ArchNetworkIOException(errorToString(err));
 
   case EADDRNOTAVAIL:
-    throw XArchNetworkNoAddress(errorToString(err));
+    throw ArchNetworkNoAddressException(errorToString(err));
 
   case EADDRINUSE:
-    throw XArchNetworkAddressInUse(errorToString(err));
+    throw ArchNetworkAddressInUseException(errorToString(err));
 
   case EHOSTUNREACH:
   case ENETUNREACH:
-    throw XArchNetworkNoRoute(errorToString(err));
+    throw ArchNetworkNoRouteException(errorToString(err));
 
   case ENOTCONN:
-    throw XArchNetworkNotConnected(errorToString(err));
+    throw ArchNetworkNotConnectedException(errorToString(err));
 
   case EPIPE:
-    throw XArchNetworkShutdown(errorToString(err));
+    throw ArchNetworkShutdownException(errorToString(err));
 
   case ECONNABORTED:
   case ECONNRESET:
-    throw XArchNetworkDisconnected(errorToString(err));
+    throw ArchNetworkDisconnectedException(errorToString(err));
 
   case ECONNREFUSED:
-    throw XArchNetworkConnectionRefused(errorToString(err));
+    throw ArchNetworkConnectionRefusedException(errorToString(err));
 
   case EHOSTDOWN:
   case ETIMEDOUT:
-    throw XArchNetworkTimedOut(errorToString(err));
+    throw ArchNetworkTimedOutException(errorToString(err));
 
   default:
-    throw XArchNetwork(errorToString(err));
+    throw ArchNetworkException(errorToString(err));
   }
 }
 
@@ -821,18 +797,18 @@ const int *ArchNetworkBSD::getUnblockPipeForThread(ArchThread thread)
 
   switch (err) {
   case HOST_NOT_FOUND:
-    throw XArchNetworkNameUnknown(s_msg[0]);
+    throw ArchNetworkNameUnknownException(s_msg[0]);
 
   case NO_DATA:
-    throw XArchNetworkNameNoAddress(s_msg[1]);
+    throw ArchNetworkNameNoAddressException(s_msg[1]);
 
   case NO_RECOVERY:
-    throw XArchNetworkNameFailure(s_msg[2]);
+    throw ArchNetworkNameFailureException(s_msg[2]);
 
   case TRY_AGAIN:
-    throw XArchNetworkNameUnavailable(s_msg[3]);
+    throw ArchNetworkNameUnavailableException(s_msg[3]);
 
   default:
-    throw XArchNetworkName(s_msg[4]);
+    throw ArchNetworkNameException(s_msg[4]);
   }
 }

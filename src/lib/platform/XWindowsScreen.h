@@ -8,14 +8,15 @@
 
 #pragma once
 
-#include "arch/Arch.h"
-#include "deskflow/ClientArgs.h"
 #include "deskflow/KeyMap.h"
 #include "deskflow/PlatformScreen.h"
-#include "platform/XWindowsPowerManager.h"
+#include "platform/XDGPowerManager.h"
+#include "platform/XWindowsConfig.h"
 
 #include <set>
 #include <vector>
+
+#include <QString>
 
 #include <X11/Xlib.h>
 
@@ -27,10 +28,7 @@ class XWindowsScreenSaver;
 class XWindowsScreen : public PlatformScreen
 {
 public:
-  XWindowsScreen(
-      const char *displayName, bool isPrimary, int mouseScrollDelta, IEventQueue *events,
-      deskflow::ClientScrollDirection m_clientScrollDirection = deskflow::ClientScrollDirection::Normal
-  );
+  XWindowsScreen(const char *displayName, bool isPrimary, IEventQueue *events);
   ~XWindowsScreen() override;
 
   //! @name manipulators
@@ -60,7 +58,7 @@ public:
   void fakeMouseButton(ButtonID id, bool press) override;
   void fakeMouseMove(int32_t x, int32_t y) override;
   void fakeMouseRelativeMove(int32_t dx, int32_t dy) const override;
-  void fakeMouseWheel(int32_t xDelta, int32_t yDelta) const override;
+  void fakeMouseWheel(ScrollDelta delta) const override;
 
   // IPlatformScreen overrides
   void enable() override;
@@ -167,7 +165,6 @@ private:
 
   // true if screen is being used as a primary screen, false otherwise
   bool m_isPrimary;
-  int m_mouseScrollDelta;
 
   Display *m_display = nullptr;
   Window m_root = None;
@@ -249,5 +246,5 @@ private:
   // pointer to (singleton) screen.  this is only needed by
   // ioErrorHandler().
   static XWindowsScreen *s_screen;
-  XWindowsPowerManager m_powerManager;
+  XDGPowerManager m_powerManager;
 };

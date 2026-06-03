@@ -1,8 +1,6 @@
 Source: deskflow
 Section: x11
-Priority: optional
 Maintainer: HAYASHI Kentaro <kenhys@xdump.org>
-Rules-Requires-Root: no
 Build-Depends:
  debhelper-compat (= 13),
  cmake,
@@ -31,8 +29,8 @@ Build-Depends:
  qt6-tools-dev,
  x11proto-dev,
  help2man,
- unsupported-architecture [hppa hurd-amd64 hurd-i386 m68k powerpc ppc64 sparc64 x32]
-Standards-Version: 4.7.2
+ unsupported-architecture [i386 hppa hurd-amd64 hurd-i386 m68k powerpc ppc64 sh4 sparc64 x32]
+Standards-Version: 4.7.3
 Homepage: https://github.com/deskflow/deskflow
 Vcs-Browser: https://salsa.debian.org/debian/deskflow
 Vcs-Git: https://salsa.debian.org/debian/deskflow.git
@@ -43,17 +41,18 @@ Depends:
  ${shlibs:Depends},
  ${misc:Depends}
 Description: Mouse and keyboard sharing utility
- Deskflow is a free and open source keyboard and mouse sharing app
+ Deskflow is a free and open source keyboard and mouse sharing application
  formerly known as Synergy Community Edition.
  .
- Use the keyboard, mouse, or trackpad of one computer to control nearby
- computers, and work seamlessly between them.
+ It allows you to use the keyboard, mouse, or trackpad of one computer
+ to control other nearby computers, enabling seamless work across
+ multiple systems.
  .
- Deskflow is oriented cross-platform and supports all major operating
- systems, including Windows, macOS, Linux, and Unix-like BSD-derived
- which supports Wayland and has kindly configuration wizard feature
- because it is also upstream of commercial fork of Synergy and it can
- be expected continuous maintenance somewhat.
+ Deskflow is cross-platform and supports all major operating systems,
+ including Windows, macOS, Linux, and BSD-derived Unix-like systems. It
+ supports Wayland and includes a user-friendly configuration wizard. As
+ the upstream project for a commercial fork of Synergy, Deskflow can be
+ expected to receive ongoing maintenance.
  .
- Deskflow provides similar UI like Barrier so transition to Deskflow
- is easy.
+ Deskflow provides a user interface similar to Barrier, making
+ migration from Barrier straightforward.

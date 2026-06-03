@@ -8,8 +8,6 @@
 
 #include "server/ClientProxy1_4.h"
 
-#include <vector>
-
 class Server;
 class IEventQueue;
 
@@ -30,7 +28,4 @@ public:
   bool parseMessage(const uint8_t *code) override;
   void fileChunkReceived() const;
   void dragInfoReceived() const;
-
-private:
-  IEventQueue *m_events;
 };

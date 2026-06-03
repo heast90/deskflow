@@ -8,6 +8,7 @@
 #pragma once
 
 #include "deskflow/KeyState.h"
+#include "platform/XWindowsConfig.h"
 
 #include <map>
 #include <vector>
@@ -98,7 +99,7 @@ protected:
   void fakeKey(const Keystroke &keystroke) override;
 
 private:
-  void init(const Display *display, bool useXKB);
+  void init(bool useXKB);
   void updateKeysymMap(deskflow::KeyMap &);
   void updateKeysymMapXKB(deskflow::KeyMap &);
   bool hasModifiersXKB() const;
@@ -107,7 +108,7 @@ private:
 
   //! Create and send language change request to \p group by DBus interface
   /*!
-  Returns the existance of nedeed DBus interface.
+  Returns the existence of needed DBus interface.
   */
   bool setCurrentLanguageWithDBus(int32_t group) const;
 

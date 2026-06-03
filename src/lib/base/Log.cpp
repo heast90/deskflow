@@ -6,7 +6,6 @@
  */
 
 #include "base/Log.h"
-#include "arch/Arch.h"
 #include "base/LogLevel.h"
 #include "base/LogOutputters.h"
 #include "common/Constants.h"
@@ -15,17 +14,20 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
-#include <ctime>
-#include <iostream>
+
+#if HAVE_FORMAT
+#include <format>
+#endif
+
+#include <QDateTime>
 
 const int kPriorityPrefixLength = 3;
 
 // names of priorities
-static const char *g_priority[] = {"FATAL",  "ERROR",  "WARNING", "NOTE",   "INFO",  "DEBUG",
-                                   "DEBUG1", "DEBUG2", "DEBUG3",  "DEBUG4", "DEBUG5"};
+static const char *g_priority[] = {"FATAL", "ERROR", "WARNING", "NOTE", "INFO", "DEBUG", "DEBUG1", "DEBUG2"};
 
 // number of priorities
-static const int g_numPriority = 11;
+static const int g_numPriority = 8;
 
 // if NDEBUG (not debug) is not specified, i.e. you're building in debug,
 // then set default log level to DEBUG, otherwise the max level is INFO.
@@ -54,44 +56,25 @@ LogLevel getPriority(const char *&fmt)
   return static_cast<LogLevel>(fmt[2] - '0');
 }
 
-void makeTimeString(std::vector<char> &buffer)
-{
-  const int yearOffset = 1900;
-  const int monthOffset = 1;
-
-  time_t t;
-  time(&t);
-  struct tm tm;
-
-#if WINAPI_MSWINDOWS
-  localtime_s(&tm, &t);
-#else
-  localtime_r(&t, &tm);
-#endif
-
-  snprintf(
-      buffer.data(), buffer.size(), "%04i-%02i-%02iT%02i:%02i:%02i", tm.tm_year + yearOffset, tm.tm_mon + monthOffset,
-      tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec
-  );
-}
-
 std::vector<char> makeMessage(const char *filename, int lineNumber, const char *message, LogLevel priority)
 {
 
   // base size includes null terminator, colon, space, etc.
   const int baseSize = 10;
 
-  const int timeBufferSize = 50;
   const int priorityMaxSize = 10;
   const auto currentPriority = static_cast<int>(priority);
 
-  std::vector<char> timeBuffer(timeBufferSize);
-  makeTimeString(timeBuffer);
+  auto timeStr = QDateTime::currentDateTime().toString(Qt::ISODateWithMs).toStdString();
 
-  size_t timestampLength = strnlen(timeBuffer.data(), timeBufferSize);
-  size_t priorityLength = strnlen(g_priority[currentPriority], priorityMaxSize);
+  auto sectionName = "IPC";
+  if (priority != LogLevel::IPC) {
+    sectionName = g_priority[currentPriority];
+  }
+
+  size_t priorityLength = strnlen(sectionName, priorityMaxSize);
   size_t messageLength = strnlen(message, SIZE_MAX);
-  size_t bufferSize = baseSize + timestampLength + priorityLength + messageLength;
+  size_t bufferSize = baseSize + timeStr.length() + priorityLength + messageLength;
 
   const auto filenameSet = filename != nullptr && filename[0] != '\0';
   if (filenameSet) {
@@ -100,14 +83,23 @@ std::vector<char> makeMessage(const char *filename, int lineNumber, const char *
     bufferSize += filenameLength + lineNumberLength;
 
     std::vector<char> buffer(bufferSize);
-    snprintf(
-        buffer.data(), bufferSize, "[%s] %s: %s\n\t%s:%d", timeBuffer.data(), g_priority[currentPriority], message,
-        filename, lineNumber
+#if HAVE_FORMAT
+    std::format_to_n(
+        buffer.data(), bufferSize, "[{}] {}: {}\n\t{}:{}", timeStr.c_str(), sectionName, message, filename, lineNumber
     );
+#else
+    snprintf(
+        buffer.data(), bufferSize, "[%s] %s: %s\n\t%s:%d", timeStr.c_str(), sectionName, message, filename, lineNumber
+    );
+#endif
     return buffer;
   } else {
     std::vector<char> buffer(bufferSize);
-    snprintf(buffer.data(), bufferSize, "[%s] %s: %s", timeBuffer.data(), g_priority[currentPriority], message);
+#if HAVE_FORMAT
+    std::format_to_n(buffer.data(), bufferSize, "[{}] {}: {}", timeStr.c_str(), sectionName, message);
+#else
+    snprintf(buffer.data(), bufferSize, "[%s] %s: %s", timeStr.c_str(), sectionName, message);
+#endif
     return buffer;
   }
 }
@@ -238,18 +230,19 @@ void Log::pop_front(bool alwaysAtHead)
   }
 }
 
-bool Log::setFilter(const char *maxPriority)
+bool Log::setFilter(const QString &maxPriority)
 {
-  if (maxPriority != nullptr) {
-    for (int i = 0; i < g_numPriority; ++i) {
-      if (strcmp(maxPriority, g_priority[i]) == 0) {
-        setFilter(static_cast<LogLevel>(i));
-        return true;
-      }
-    }
+  if (maxPriority.isEmpty()) {
     return false;
   }
-  return true;
+
+  for (int i = 0; i < g_numPriority; ++i) {
+    if (maxPriority == QString(g_priority[i])) {
+      setFilter(static_cast<LogLevel>(i));
+      return true;
+    }
+  }
+  return false;
 }
 
 void Log::setFilter(LogLevel maxPriority)
@@ -266,7 +259,7 @@ LogLevel Log::getFilter() const
 
 void Log::output(LogLevel priority, const char *msg)
 {
-  assert(static_cast<int>(priority) >= -1 && static_cast<int>(priority) < g_numPriority);
+  assert(static_cast<int>(priority) >= -2 && static_cast<int>(priority) < g_numPriority);
   assert(msg != nullptr);
   if (!msg)
     return;

@@ -8,11 +8,12 @@
 
 #include "base/LogOutputters.h"
 #include "arch/Arch.h"
-#include "base/Path.h"
-#include "base/String.h"
 
-#include <fstream>
 #include <iostream>
+
+#include <QFile>
+#include <QString>
+#include <QTextStream>
 
 constexpr auto s_logFileSizeLimit = 1024 * 1024; //!< Max Log size before rotating (1Mb)
 
@@ -20,7 +21,7 @@ constexpr auto s_logFileSizeLimit = 1024 * 1024; //!< Max Log size before rotati
 // StopLogOutputter
 //
 
-void StopLogOutputter::open(const char *)
+void StopLogOutputter::open(const QString &)
 {
   // do nothing
 }
@@ -30,12 +31,7 @@ void StopLogOutputter::close()
   // do nothing
 }
 
-void StopLogOutputter::show(bool)
-{
-  // do nothing
-}
-
-bool StopLogOutputter::write(LogLevel, const char *)
+bool StopLogOutputter::write(LogLevel, const QString &)
 {
   return false;
 }
@@ -44,7 +40,7 @@ bool StopLogOutputter::write(LogLevel, const char *)
 // ConsoleLogOutputter
 //
 
-void ConsoleLogOutputter::open(const char *title)
+void ConsoleLogOutputter::open(const QString &title)
 {
   // do nothing
 }
@@ -54,17 +50,12 @@ void ConsoleLogOutputter::close()
   // do nothing
 }
 
-void ConsoleLogOutputter::show(bool showIfEmpty)
-{
-  // do nothing
-}
-
-bool ConsoleLogOutputter::write(LogLevel level, const char *msg)
+bool ConsoleLogOutputter::write(LogLevel level, const QString &msg)
 {
   if ((level >= LogLevel::Fatal) && (level <= LogLevel::Warning))
-    std::cerr << msg << std::endl;
+    std::cerr << qPrintable(msg) << std::endl;
   else
-    std::cout << msg << std::endl;
+    std::cout << qPrintable(msg) << std::endl;
   std::cout.flush();
   return true;
 }
@@ -78,7 +69,7 @@ void ConsoleLogOutputter::flush() const
 // SystemLogOutputter
 //
 
-void SystemLogOutputter::open(const char *title)
+void SystemLogOutputter::open(const QString &title)
 {
   ARCH->openLog(title);
 }
@@ -88,12 +79,7 @@ void SystemLogOutputter::close()
   ARCH->closeLog();
 }
 
-void SystemLogOutputter::show(bool showIfEmpty)
-{
-  ARCH->showLog(showIfEmpty);
-}
-
-bool SystemLogOutputter::write(LogLevel level, const char *msg)
+bool SystemLogOutputter::write(LogLevel level, const QString &msg)
 {
   ARCH->writeLog(level, msg);
   return true;
@@ -103,7 +89,7 @@ bool SystemLogOutputter::write(LogLevel level, const char *msg)
 // SystemLogger
 //
 
-SystemLogger::SystemLogger(const char *title, bool blockConsole)
+SystemLogger::SystemLogger(const QString &title, bool blockConsole)
 {
   // redirect log messages
   if (blockConsole) {
@@ -129,54 +115,41 @@ SystemLogger::~SystemLogger()
 // FileLogOutputter
 //
 
-FileLogOutputter::FileLogOutputter(const char *logFile)
+FileLogOutputter::FileLogOutputter(const QString &logFile)
 {
   setLogFilename(logFile);
 }
 
-void FileLogOutputter::setLogFilename(const char *logFile)
+void FileLogOutputter::setLogFilename(const QString &logFile)
 {
   assert(logFile != nullptr);
   m_fileName = logFile;
 }
 
-bool FileLogOutputter::write(LogLevel level, const char *message)
+bool FileLogOutputter::write(LogLevel, const QString &message)
 {
-  bool moveFile = false;
+  QFile file(m_fileName);
+  if (!file.open(QFile::WriteOnly | QFile::Append))
+    return false;
 
-  std::ofstream m_handle;
-  m_handle.open(deskflow::filesystem::path(m_fileName), std::fstream::app);
-  if (m_handle.is_open() && m_handle.fail() != true) {
-    m_handle << message << std::endl;
+  QTextStream(&file) << message << Qt::endl;
+  file.close();
 
-    // when file size exceeds limits, move to 'old log' filename.
-    size_t p = m_handle.tellp();
-    if (p > s_logFileSizeLimit) {
-      moveFile = true;
-    }
-  }
-  m_handle.close();
-
-  if (moveFile) {
-    std::string oldLogFilename = deskflow::string::sprintf("%s.1", m_fileName.c_str());
-    remove(oldLogFilename.c_str());
-    rename(m_fileName.c_str(), oldLogFilename.c_str());
+  if (file.size() > s_logFileSizeLimit) {
+    const auto oldFile = QStringLiteral("%1.1").arg(m_fileName);
+    QFile::remove(m_fileName);
+    QFile::rename(m_fileName, oldFile);
   }
 
   return true;
 }
 
-void FileLogOutputter::open(const char *title)
+void FileLogOutputter::open(const QString &title)
 {
   // do nothing
 }
 
 void FileLogOutputter::close()
-{
-  // do nothing
-}
-
-void FileLogOutputter::show(bool showIfEmpty)
 {
   // do nothing
 }

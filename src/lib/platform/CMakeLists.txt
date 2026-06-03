@@ -1,6 +1,6 @@
-# SPDX-FileCopyrightText: 2024 Chris Rizzitello <sithlord48@gmail.com>
-# SPDX-FileCopyrightText: 2012 - 2024 Symless Ltd
-# SPDX-FileCopyrightText: 2009 - 2012 Nick Bolton
+# SPDX-FileCopyrightText: (C) 2024 Chris Rizzitello <sithlord48@gmail.com>
+# SPDX-FileCopyrightText: (C) 2012 - 2024 Symless Ltd
+# SPDX-FileCopyrightText: (C) 2009 - 2012 Nick Bolton
 # SPDX-License-Identifier: MIT
 
 if(UNIX AND NOT APPLE)
@@ -24,8 +24,6 @@ if(WIN32)
     MSWindowsClipboardFacade.h
     MSWindowsClipboardHTMLConverter.cpp
     MSWindowsClipboardHTMLConverter.h
-    MSWindowsClipboardTextConverter.cpp
-    MSWindowsClipboardTextConverter.h
     MSWindowsClipboardUTF16Converter.cpp
     MSWindowsClipboardUTF16Converter.h
     MSWindowsDebugOutputter.cpp
@@ -96,33 +94,42 @@ elseif(APPLE)
   )
 elseif(UNIX)
   set(PLATFORM_SOURCES
-    XWindowsClipboard.cpp
-    XWindowsClipboard.h
-    XWindowsClipboardAnyBitmapConverter.cpp
-    XWindowsClipboardAnyBitmapConverter.h
-    XWindowsClipboardBMPConverter.cpp
-    XWindowsClipboardBMPConverter.h
-    XWindowsClipboardHTMLConverter.cpp
-    XWindowsClipboardHTMLConverter.h
-    XWindowsClipboardTextConverter.cpp
-    XWindowsClipboardTextConverter.h
-    XWindowsClipboardUCS2Converter.cpp
-    XWindowsClipboardUCS2Converter.h
-    XWindowsClipboardUTF8Converter.cpp
-    XWindowsClipboardUTF8Converter.h
-    XWindowsEventQueueBuffer.cpp
-    XWindowsEventQueueBuffer.h
-    XWindowsKeyState.cpp
-    XWindowsKeyState.h
-    XWindowsPowerManager.cpp
-    XWindowsPowerManager.h
-    XWindowsScreen.cpp
-    XWindowsScreen.h
-    XWindowsScreenSaver.cpp
-    XWindowsScreenSaver.h
-    XWindowsUtil.cpp
-    XWindowsUtil.h
+    XDGPortalRegistry.h
+    XDGPowerManager.cpp
+    XDGPowerManager.h
+    XDGKeyUtil.h
+    XDGKeyUtil.cpp
   )
+  if (BUILD_X11_SUPPORT)
+    configure_file(XWindowsConfig.h.in XWindowsConfig.h @ONLY)
+    list(APPEND PLATFORM_SOURCES
+      XWindowsClipboard.cpp
+      XWindowsClipboard.h
+      XWindowsClipboardAnyBitmapConverter.cpp
+      XWindowsClipboardAnyBitmapConverter.h
+      XWindowsClipboardBMPConverter.cpp
+      XWindowsClipboardBMPConverter.h
+      XWindowsClipboardHTMLConverter.cpp
+      XWindowsClipboardHTMLConverter.h
+      XWindowsClipboardTextConverter.cpp
+      XWindowsClipboardTextConverter.h
+      XWindowsClipboardUCS2Converter.cpp
+      XWindowsClipboardUCS2Converter.h
+      XWindowsClipboardUTF8Converter.cpp
+      XWindowsClipboardUTF8Converter.h
+      XWindowsEventQueueBuffer.cpp
+      XWindowsEventQueueBuffer.h
+      XWindowsKeyState.cpp
+      XWindowsKeyState.h
+      XWindowsScreen.cpp
+      XWindowsScreen.h
+      XWindowsScreenSaver.cpp
+      XWindowsScreenSaver.h
+      XWindowsUtil.cpp
+      XWindowsUtil.h
+      ${CMAKE_CURRENT_BINARY_DIR}/XWindowsConfig.h
+    )
+  endif()
 
   if(LIBEI_FOUND)
     list(APPEND PLATFORM_SOURCES
@@ -132,6 +139,10 @@ elseif(UNIX)
       EiKeyState.h
       EiScreen.cpp
       EiScreen.h
+      WlClipboardCollection.cpp
+      WlClipboardCollection.h
+      WlClipboard.cpp
+      WlClipboard.h
     )
     # The Portal sources also require EI.
     if(LIBPORTAL_FOUND)
@@ -145,27 +156,10 @@ elseif(UNIX)
   endif()
 endif()
 
-if(APPLE)
-  list(APPEND inc /System/Library/Frameworks)
-endif()
-include_directories(${inc})
-
 # wayland.h is included to check for wayland support
-add_library(platform STATIC ${PLATFORM_SOURCES} Wayland.h)
+add_library(platform STATIC ${PLATFORM_SOURCES})
 
 target_link_libraries(platform client ${libs})
-
-macro(link_wayland_libs)
-  target_compile_definitions(platform PUBLIC WINAPI_LIBEI WINAPI_LIBPORTAL HAVE_LIBPORTAL_INPUTCAPTURE)
-
-  target_link_libraries(platform ${LIBXKBCOMMON_LINK_LIBRARIES}
-                        ${GLIB2_LINK_LIBRARIES} ${LIBM_LIBRARIES}
-                        ${LIBEI_LINK_LIBRARIES} ${LIBPORTAL_LINK_LIBRARIES}
-  )
-
-  target_include_directories(platform PUBLIC ${LIBEI_INCLUDE_DIRS} ${LIBPORTAL_INCLUDE_DIRS})
-
-endmacro()
 
 if(UNIX)
   target_link_libraries(
@@ -176,14 +170,20 @@ if(UNIX)
     client
     ${libs})
 
-  if(NOT APPLE)
-    target_link_libraries(platform Qt6::DBus)
-
-    link_wayland_libs()
+  if(APPLE)
+    find_library(COCOA_LIBRARY Cocoa)
+    target_link_libraries(platform ${COCOA_LIBRARY})
+  else()
+    if(${LIBXKBCOMMON_VERSION} VERSION_GREATER_EQUAL "1.10")
+      target_compile_definitions(platform PRIVATE HAVE_XKB_KEYMAP_MOD_GET_MASK=1)
+    endif()
+    target_compile_definitions(platform PUBLIC WINAPI_LIBEI WINAPI_LIBPORTAL HAVE_LIBPORTAL_INPUTCAPTURE)
+    target_include_directories(platform PUBLIC ${LIBEI_INCLUDE_DIRS} ${LIBPORTAL_INCLUDE_DIRS})
+    target_link_libraries(
+      platform
+      Qt6::DBus
+      ${LIBXKBCOMMON_LINK_LIBRARIES}
+      ${GLIB2_LINK_LIBRARIES} ${LIBM_LIBRARIES}
+      ${LIBEI_LINK_LIBRARIES} ${LIBPORTAL_LINK_LIBRARIES})
   endif()
-endif()
-
-if(APPLE)
-  find_library(COCOA_LIBRARY Cocoa)
-  target_link_libraries(platform ${COCOA_LIBRARY})
 endif()

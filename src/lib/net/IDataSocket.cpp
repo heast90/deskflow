@@ -6,7 +6,8 @@
  */
 
 #include "net/IDataSocket.h"
-#include "base/EventQueue.h"
+
+#include <assert.h>
 
 //
 // IDataSocket

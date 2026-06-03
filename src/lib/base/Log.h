@@ -7,11 +7,12 @@
 
 #pragma once
 
-#include "arch/Arch.h"
-#include "arch/IArchMultithread.h"
-#include "common/Common.h"
+#include "LogLevel.h"
 
+#include <list>
 #include <mutex>
+
+#include <QString>
 
 #define CLOG (Log::getInstance())
 #define BYE "\nTry `%s --help' for more information."
@@ -84,7 +85,7 @@ public:
   true if the priority \c name was recognized;  if \c name is nullptr
   then it simply returns true.
   */
-  bool setFilter(const char *name);
+  bool setFilter(const QString &name);
 
   //! Set the minimum priority filter (by ordinal).
   void setFilter(LogLevel);
@@ -198,6 +199,7 @@ otherwise it expands to a call that doesn't.
 // end, then we resort to using non-numerical chars. this still works (since
 // to deduce the number we subtract octal \060, so '/' is -1, and ':' is 10
 
+#define CLOG_IPC CLOG_TRACE "%z\056"   // char is '' ?
 #define CLOG_PRINT CLOG_TRACE "%z\057" // char is '/'
 #define CLOG_CRIT CLOG_TRACE "%z\060"  // char is '0'
 #define CLOG_ERR CLOG_TRACE "%z\061"
@@ -207,10 +209,8 @@ otherwise it expands to a call that doesn't.
 #define CLOG_DEBUG CLOG_TRACE "%z\065"
 #define CLOG_DEBUG1 CLOG_TRACE "%z\066"
 #define CLOG_DEBUG2 CLOG_TRACE "%z\067"
-#define CLOG_DEBUG3 CLOG_TRACE "%z\070"
-#define CLOG_DEBUG4 CLOG_TRACE "%z\071" // char is '9'
-#define CLOG_DEBUG5 CLOG_TRACE "%z\072" // char is ':'
 
+#define LOG_IPC(...) LOG((CLOG_IPC __VA_ARGS__))
 #define LOG_PRINT(...) LOG((CLOG_PRINT __VA_ARGS__))
 #define LOG_CRIT(...) LOG((CLOG_CRIT __VA_ARGS__))
 #define LOG_ERR(...) LOG((CLOG_ERR __VA_ARGS__))
@@ -220,6 +220,3 @@ otherwise it expands to a call that doesn't.
 #define LOG_DEBUG(...) LOG((CLOG_DEBUG __VA_ARGS__))
 #define LOG_DEBUG1(...) LOG((CLOG_DEBUG1 __VA_ARGS__))
 #define LOG_DEBUG2(...) LOG((CLOG_DEBUG2 __VA_ARGS__))
-#define LOG_DEBUG3(...) LOG((CLOG_DEBUG3 __VA_ARGS__))
-#define LOG_DEBUG4(...) LOG((CLOG_DEBUG4 __VA_ARGS__))
-#define LOG_DEBUG5(...) LOG((CLOG_DEBUG5 __VA_ARGS__))

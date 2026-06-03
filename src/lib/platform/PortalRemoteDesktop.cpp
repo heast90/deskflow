@@ -1,5 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2025 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2024 Symless Ltd.
  * SPDX-FileCopyrightText: (C) 2022 Red Hat, Inc.
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
@@ -8,6 +9,7 @@
 #include "platform/PortalRemoteDesktop.h"
 #include "base/Log.h"
 #include "base/TMethodJob.h"
+#include "common/Settings.h"
 
 namespace deskflow {
 
@@ -83,11 +85,14 @@ void PortalRemoteDesktop::handleSessionStarted(GObject *object, GAsyncResult *re
   if (!xdp_session_start_finish(session, res, &error)) {
     LOG_ERR("failed to start portal remote desktop session, quitting: %s", error->message);
     g_main_loop_quit(m_glibMainLoop);
-    m_events->addEvent(EventTypes::Quit);
+    m_events->addEvent(Event(EventTypes::Quit));
     return;
   }
 
   m_sessionRestoreToken = xdp_session_get_restore_token(session);
+  if (m_sessionRestoreToken) {
+    Settings::setValue(Settings::Client::XdpRestoreToken, QString(m_sessionRestoreToken));
+  }
 
   // ConnectToEIS requires version 2 of the xdg-desktop-portal (and the same
   // version in the impl.portal), i.e. you'll need an updated compositor on
@@ -96,7 +101,7 @@ void PortalRemoteDesktop::handleSessionStarted(GObject *object, GAsyncResult *re
   fd = xdp_session_connect_to_eis(session, &error);
   if (fd < 0) {
     g_main_loop_quit(m_glibMainLoop);
-    m_events->addEvent(EventTypes::Quit);
+    m_events->addEvent(Event(EventTypes::Quit));
     return;
   }
 
@@ -116,7 +121,7 @@ void PortalRemoteDesktop::handleInitSession(GObject *object, GAsyncResult *res)
     // fails.
     if (m_sessionIteration == 0) {
       g_main_loop_quit(m_glibMainLoop);
-      m_events->addEvent(EventTypes::Quit);
+      m_events->addEvent(Event(EventTypes::Quit));
     } else {
       this->reconnect(1000);
     }
@@ -144,10 +149,15 @@ void PortalRemoteDesktop::handleInitSession(GObject *object, GAsyncResult *res)
 
 gboolean PortalRemoteDesktop::initSession()
 {
+  if (auto sessionToken = Settings::value(Settings::Client::XdpRestoreToken).toByteArray(); !sessionToken.isEmpty()) {
+    free(m_sessionRestoreToken);
+    m_sessionRestoreToken = strdup(sessionToken.data());
+  }
+
   LOG_DEBUG("setting up remote desktop session with restore token %s", m_sessionRestoreToken);
   xdp_portal_create_remote_desktop_session_full(
       m_portal, static_cast<XdpDeviceType>(XDP_DEVICE_POINTER | XDP_DEVICE_KEYBOARD), XDP_OUTPUT_NONE,
-      XDP_REMOTE_DESKTOP_FLAG_NONE, XDP_CURSOR_MODE_HIDDEN, XDP_PERSIST_MODE_TRANSIENT, m_sessionRestoreToken,
+      XDP_REMOTE_DESKTOP_FLAG_NONE, XDP_CURSOR_MODE_HIDDEN, XDP_PERSIST_MODE_PERSISTENT, m_sessionRestoreToken,
       nullptr, // cancellable
       [](GObject *obj, GAsyncResult *res, gpointer data) {
         static_cast<PortalRemoteDesktop *>(data)->handleInitSession(obj, res);
@@ -158,7 +168,7 @@ gboolean PortalRemoteDesktop::initSession()
   return false; // don't reschedule
 }
 
-void PortalRemoteDesktop::glibThread(void *)
+void PortalRemoteDesktop::glibThread(const void *)
 {
   auto context = g_main_loop_get_context(m_glibMainLoop);
 

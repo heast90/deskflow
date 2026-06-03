@@ -1,5 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2025 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2012 - 2016 Symless Ltd.
  * SPDX-FileCopyrightText: (C) 2002 Chris Schoeneman
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
@@ -7,18 +8,17 @@
 
 #pragma once
 
-#include "base/EventTypes.h"
-#include "common/IInterface.h"
-
+#include <cstdint>
 #include <string>
 
 //! Clipboard interface
 /*!
 This interface defines the methods common to all clipboards.
 */
-class IClipboard : public IInterface
+class IClipboard
 {
 public:
+  virtual ~IClipboard() = default;
   //! Timestamp type
   /*!
   Timestamp type.  Timestamps are in milliseconds from some
@@ -29,7 +29,7 @@ public:
 
   //! Clipboard formats
   /*!
-  The list of known clipboard formats.  kNumFormats must be last and
+  The list of known clipboard formats.  TotalFormats must be last and
   formats must be sequential starting from zero.  Clipboard data set
   via add() and retrieved via get() must be in one of these formats.
   Platform dependent clipboard subclasses can and should present any
@@ -46,12 +46,12 @@ public:
   HTML fragment (but not necessarily a complete HTML document).
   Newlines are LF.
   */
-  enum EFormat
+  enum class Format
   {
-    kText,      //!< Text format, UTF-8, newline is LF
-    kHTML,      //!< HTML format, HTML fragment, UTF-8, newline is LF
-    kBitmap,    //!< Bitmap format, BMP 24/32bpp, BI_RGB
-    kNumFormats //!< The number of clipboard formats
+    Text,        //!< Text format, UTF-8, newline is LF
+    HTML,        //!< HTML format, HTML fragment, UTF-8, newline is LF
+    Bitmap,      //!< Bitmap format, BMP 24/32bpp, BI_RGB
+    TotalFormats //!< The number of clipboard formats supported
   };
 
   //! @name manipulators
@@ -71,7 +71,7 @@ public:
   Add data in the given format to the clipboard.  May only be
   called after a successful empty().
   */
-  virtual void add(EFormat, const std::string &data) = 0;
+  virtual void add(Format, const std::string &data) = 0;
 
   //@}
   //! @name accessors
@@ -109,7 +109,7 @@ public:
   Return true iff the clipboard contains data in the given
   format.  Must be called between a successful open() and close().
   */
-  virtual bool has(EFormat) const = 0;
+  virtual bool has(Format) const = 0;
 
   //! Get data
   /*!
@@ -117,7 +117,7 @@ public:
   if there is no data in that format.  Must be called between
   a successful open() and close().
   */
-  virtual std::string get(EFormat) const = 0;
+  virtual std::string get(Format) const = 0;
 
   //! Marshall clipboard data
   /*!

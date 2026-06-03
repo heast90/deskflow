@@ -8,14 +8,10 @@
 #include "SecureListenSocket.h"
 
 #include "SecureSocket.h"
-#include "arch/XArch.h"
-#include "base/String.h"
+#include "arch/Arch.h"
+#include "arch/ArchException.h"
 #include "common/Settings.h"
-#include "deskflow/ArgParser.h"
-#include "deskflow/ArgsBase.h"
-#include "net/NetworkAddress.h"
 #include "net/SocketMultiplexer.h"
-#include "net/TSocketMultiplexerMethodJob.h"
 
 //
 // SecureListenSocket
@@ -34,37 +30,30 @@ SecureListenSocket::SecureListenSocket(
 
 std::unique_ptr<IDataSocket> SecureListenSocket::accept()
 {
-  std::unique_ptr<SecureSocket> socket;
+  std::unique_ptr<SecureSocket> secureSocket;
   try {
-    socket = std::make_unique<SecureSocket>(
-        m_events, m_socketMultiplexer, ARCH->acceptSocket(m_socket, nullptr), m_securityLevel
+    secureSocket = std::make_unique<SecureSocket>(
+        events(), socketMultiplexer(), ARCH->acceptSocket(socket(), nullptr), m_securityLevel
     );
-    socket->initSsl(true);
+    secureSocket->initSsl(true);
 
     setListeningJob();
 
     // default location of the TLS cert file in users dir
-    std::string certificateFilename = Settings::value(Settings::Security::Certificate).toString().toStdString();
-
-    // if the tls cert option is set use that for the certificate file
-    if (!ArgParser::argsBase().m_tlsCertFile.empty()) {
-      certificateFilename = ArgParser::argsBase().m_tlsCertFile;
-    }
-
-    if (!socket->loadCertificates(certificateFilename)) {
+    if (!secureSocket->loadCertificate(Settings::value(Settings::Security::Certificate).toString())) {
       return nullptr;
     }
 
-    socket->secureAccept();
+    secureSocket->secureAccept();
 
-    return socket;
-  } catch (XArchNetwork &) {
-    if (socket) {
+    return secureSocket;
+  } catch (ArchNetworkException &) {
+    if (secureSocket) {
       setListeningJob();
     }
     return nullptr;
   } catch (std::exception &ex) {
-    if (socket) {
+    if (secureSocket) {
       setListeningJob();
     }
     throw ex;

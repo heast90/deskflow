@@ -9,11 +9,8 @@
 #pragma once
 
 #include "base/Event.h"
-#include "base/EventTypes.h"
-#include "common/IInterface.h"
 
 #include <functional>
-#include <string>
 
 class IEventQueueBuffer;
 
@@ -28,10 +25,12 @@ on any event becoming available at the head of the queue and can place
 new events at the end of the queue.  Clients can also add and remove
 timers which generate events periodically.
 */
-class IEventQueue : public IInterface
+class IEventQueue
 {
 public:
   using EventHandler = std::function<void(const Event &)>;
+
+  virtual ~IEventQueue() = default;
   class TimerEvent
   {
   public:
@@ -77,7 +76,7 @@ public:
   /*!
   Adds \p event to the end of the queue.
   */
-  virtual void addEvent(const Event &event) = 0;
+  virtual void addEvent(Event &&event) = 0;
 
   //! Create a recurring timer
   /*!
@@ -150,13 +149,6 @@ public:
   //@}
   //! @name accessors
   //@{
-
-  //! Test if queue is empty
-  /*!
-  Returns true iff the queue has no events in it, including timer
-  events.
-  */
-  virtual bool isEmpty() const = 0;
 
   //! Get the system event type target
   /*!

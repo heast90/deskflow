@@ -8,7 +8,6 @@
 #pragma once
 
 #include "arch/IArchNetwork.h"
-#include "base/EventTypes.h"
 
 //! Network address type
 /*!
@@ -34,11 +33,11 @@ public:
   it's used, otherwise it's used as a host name.  If \c hostname ends
   in ":[0-9]+" then that suffix is extracted and used as the port,
   overridding the port parameter.  The resulting port must be a valid
-  port number (zero is not a valid port number) otherwise \c XSocketAddress
-  is thrown with an error of \c XSocketAddress::kBadPort.  The hostname
+  port number (zero is not a valid port number) otherwise \c SocketAddressException
+  is thrown with an error of \c SocketAddressException::kBadPort.  The hostname
   is not resolved by the c'tor;  use \c resolve to do that.
   */
-  NetworkAddress(const std::string &hostname, int port = 0);
+  explicit NetworkAddress(const std::string &hostname, int port = 0);
 
   NetworkAddress(const NetworkAddress &);
 
@@ -53,7 +52,7 @@ public:
   /*!
   Resolves the hostname to an address.  This can be done any number of
   times and is done automatically by the c'tor taking a hostname.
-  Throws XSocketAddress if resolution is unsuccessful, after which
+  Throws SocketAddressException if resolution is unsuccessful, after which
   \c isValid returns false until the next call to this method.
   index - determine index of IP we would like to use from resolved addresses
   Returns count of successfully resolved addressed.
@@ -69,12 +68,6 @@ public:
   Returns true if this address is equal to \p address.
   */
   bool operator==(const NetworkAddress &address) const;
-
-  //! Check address inequality
-  /*!
-  Returns true if this address is not equal to \p address.
-  */
-  bool operator!=(const NetworkAddress &address) const;
 
   //! Check address validity
   /*!

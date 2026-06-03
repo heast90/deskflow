@@ -1,6 +1,7 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
- * SPDX-FileCopyrightText: (C) 2024 Chris Rizzitello <sithord48@gmail.com>
+ * SPDX-FileCopyrightText: (C) 2025 Deskflow Developers
+ * SPDX-FileCopyrightText: (C) 2024 - 2026 Chris Rizzitello <sithord48@gmail.com>
  * SPDX-FileCopyrightText: (C) 2012 - 2024 Symless Ltd.
  * SPDX-FileCopyrightText: (C) 2008 Volker Lanz <vl@fidra.de>
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
@@ -8,6 +9,7 @@
 
 #pragma once
 
+#include <QHostAddress>
 #include <QMainWindow>
 #include <QMutex>
 #include <QProcess>
@@ -16,15 +18,16 @@
 #include <QSystemTrayIcon>
 #include <QThread>
 
-#include "ServerConfig.h"
 #include "VersionChecker.h"
+#include "config/ServerConfig.h"
 #include "gui/core/ClientConnection.h"
 #include "gui/core/CoreProcess.h"
+#include "gui/core/NetworkMonitor.h"
 #include "gui/core/ServerConnection.h"
 #include "gui/core/WaylandWarnings.h"
-#include "gui/tls/TlsUtility.h"
+#include "net/Fingerprint.h"
 
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
 #include "gui/OSXHelpers.h"
 #endif
 
@@ -37,7 +40,6 @@ class QPushButton;
 class QTextEdit;
 class QComboBox;
 class QTabWidget;
-class QToolButton;
 class QCheckBox;
 class QRadioButton;
 class QMessageBox;
@@ -45,6 +47,7 @@ class QAbstractButton;
 class QLocalServer;
 
 class DeskflowApplication;
+class LogDock;
 
 namespace Ui {
 class MainWindow;
@@ -58,6 +61,7 @@ class MainWindow : public QMainWindow
 {
   using CoreMode = Settings::CoreMode;
   using CoreProcess = deskflow::gui::CoreProcess;
+  using NetworkMonitor = deskflow::gui::NetworkMonitor;
 
   Q_OBJECT
 
@@ -84,16 +88,21 @@ public:
   {
     return m_serverConfig;
   }
-  void autoAddScreen(const QString &name);
 
   void hide();
 
+protected:
+  void changeEvent(QEvent *e) override;
+
 private:
+  /**
+   * @brief updateText Update all text not in the UI
+   */
+  void updateText();
   void toggleLogVisible(bool visible);
 
   void settingsChanged(const QString &key = QString());
   void serverConfigSaving();
-  void coreProcessStarting();
   void coreProcessError(CoreProcess::Error error);
   void coreConnectionStateChanged(CoreProcess::ConnectionState state);
   void coreProcessStateChanged(CoreProcess::ProcessState state);
@@ -113,23 +122,21 @@ private:
 
   void showMyFingerprint();
   void updateSecurityIcon(bool visible);
+  void updateNetworkInfo();
 
-  void coreModeToggled();
-  void updateModeControls(bool serverMode);
-
+  void coreModeToggled(bool checked);
+  void updateModeControls();
+  void updateModeControlLabels();
   std::unique_ptr<Ui::MainWindow> ui;
 
-  void updateSize();
   void createMenuBar();
   void setupTrayIcon();
   void applyConfig();
-  void setIcon();
+  void setTrayIcon();
   void setStatus(const QString &status);
   void updateFromLogLine(const QString &line);
-  [[nodiscard]] QString getIPAddresses() const;
   void checkConnected(const QString &line);
   void checkFingerprint(const QString &line);
-  [[nodiscard]] QString getTimeStamp() const;
   void closeEvent(QCloseEvent *event) override;
   void secureSocket(bool secureSocket);
   void connectSlots();
@@ -138,6 +145,7 @@ private:
   void updateScreenName();
   void saveSettings() const;
   void showConfigureServer(const QString &message);
+  void showConfigureClient();
   void restoreWindow();
   void setupControls();
   void showFirstConnectedMessage();
@@ -148,6 +156,15 @@ private:
   void daemonIpcClientConnectionFailed();
   void toggleCanRunCore(bool enableButtons);
   void remoteHostChanged(const QString &newRemoteHost);
+  void handleNewClientPromptRequest(const QString &clientName, bool usePeerAuth);
+  void updateIpLabel(const QStringList &addresses);
+
+  /**
+   * @brief showClientError
+   * @param error Error Type
+   * @param address
+   */
+  void showClientError(deskflow::client::ErrorType error, const QString &address);
 
   /**
    * @brief trustedFingerprintDatabase get the FingerprintDatabase for the trusted clients or trusted servers.
@@ -155,9 +172,13 @@ private:
    */
   QString trustedFingerprintDatabase() const;
 
-  // Generate prints if they are missing
-  // Returns true if successful
-  bool regenerateLocalFingerprints();
+  /**
+   * @brief generateCertificate Generate a new certificate
+   * @return true when successful
+   */
+  bool generateCertificate();
+
+  Fingerprint m_fingerprint;
 
   void serverClientsChanged(const QStringList &clients);
 
@@ -167,12 +188,12 @@ private:
   VersionChecker m_versionChecker;
   bool m_secureSocket = false;
   bool m_saveOnExit = true;
+  bool m_clientErrorVisible = false;
   deskflow::gui::core::WaylandWarnings m_waylandWarnings;
   ServerConfig m_serverConfig;
   deskflow::gui::CoreProcess m_coreProcess;
   deskflow::gui::ServerConnection m_serverConnection;
   deskflow::gui::ClientConnection m_clientConnection;
-  deskflow::gui::TlsUtility m_tlsUtility;
   QSize m_expandedSize = QSize();
   QStringList m_checkedClients;
   QStringList m_checkedServers;
@@ -180,10 +201,17 @@ private:
   QLocalServer *m_guiDupeChecker = nullptr;
   deskflow::gui::ipc::DaemonIpcClient *m_daemonIpcClient = nullptr;
 
+  LogDock *m_logDock;
   QLabel *m_lblSecurityStatus = nullptr;
   QLabel *m_lblStatus = nullptr;
-  QToolButton *m_btnFingerprint = nullptr;
+  QPushButton *m_btnFingerprint = nullptr;
   QPushButton *m_btnUpdate = nullptr;
+
+  // Window Menu
+  QMenu *m_menuFile = nullptr;
+  QMenu *m_menuEdit = nullptr;
+  QMenu *m_menuView = nullptr;
+  QMenu *m_menuHelp = nullptr;
 
   // Window Actions
   QAction *m_actionAbout = nullptr;
@@ -197,4 +225,12 @@ private:
   QAction *m_actionStartCore = nullptr;
   QAction *m_actionRestartCore = nullptr;
   QAction *m_actionStopCore = nullptr;
+
+  // Network monitoring
+  NetworkMonitor *m_networkMonitor = nullptr;
+  QString m_currentIpAddress;
+
+  // Server IP strategy optimization
+  QStringList m_serverStartIPs;
+  QString m_serverStartSuggestedIP;
 };

@@ -9,10 +9,10 @@ Author: Kentaro HAYASHI <kenhys@xdump.org>
  1 file changed, 2 insertions(+)
 
 diff --git a/src/lib/gui/MainWindow.cpp b/src/lib/gui/MainWindow.cpp
-index 71b9870..c7509e1 100644
+index ba1c821..0739838 100644
 --- a/src/lib/gui/MainWindow.cpp
 +++ b/src/lib/gui/MainWindow.cpp
-@@ -634,6 +634,8 @@ void MainWindow::open()
+@@ -672,6 +672,8 @@ void MainWindow::open()
    const auto kCriticalDialogDelay = 100;
    QTimer::singleShot(kCriticalDialogDelay, this, &messages::raiseCriticalDialog);
  

@@ -1,6 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
- * SPDX-FileCopyrightText: (C) 2025 Deskflow Developers
+ * SPDX-FileCopyrightText: (C) 2025 - 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2024 Symless Ltd.
  * SPDX-FileCopyrightText: (C) 2022 Red Hat, Inc.
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
@@ -8,19 +8,17 @@
 
 #include "platform/EiScreen.h"
 
-#include "arch/Arch.h"
-#include "arch/XArch.h"
 #include "base/IEventQueue.h"
 #include "base/Log.h"
-#include "base/Stopwatch.h"
 #include "common/Constants.h"
-#include "deskflow/Clipboard.h"
-#include "deskflow/KeyMap.h"
-#include "deskflow/XScreen.h"
+#include "common/Settings.h"
+#include "deskflow/App.h"
+#include "deskflow/IScreen.h"
 #include "platform/EiEventQueueBuffer.h"
 #include "platform/EiKeyState.h"
 #include "platform/PortalInputCapture.h"
 #include "platform/PortalRemoteDesktop.h"
+#include "platform/WlClipboardCollection.h"
 
 #include <algorithm>
 #include <cmath>
@@ -42,6 +40,7 @@ EiScreen::EiScreen(bool isPrimary, IEventQueue *events, bool usePortal)
     : PlatformScreen{events},
       m_isPrimary{isPrimary},
       m_events{events},
+      m_clipboard{new WlClipboardCollection()},
       m_w{1},
       m_h{1},
       m_isOnScreen{isPrimary}
@@ -73,6 +72,11 @@ EiScreen::EiScreen(bool isPrimary, IEventQueue *events, bool usePortal)
       throw std::runtime_error("failed to init ei context");
     }
   }
+
+  // disable sleep if the flag is set
+  if (Settings::value(Settings::Core::PreventSleep).toBool()) {
+    m_powerManager.disableSleep();
+  }
 }
 
 EiScreen::~EiScreen()
@@ -83,6 +87,7 @@ EiScreen::~EiScreen()
   cleanupEi();
 
   delete m_keyState;
+  delete m_clipboard;
 
   delete m_portalRemoteDesktop;
 }
@@ -123,7 +128,7 @@ void EiScreen::initEi()
 
   // install the platform event queue
   m_events->adoptBuffer(nullptr);
-  m_events->adoptBuffer(new EiEventQueueBuffer(this, m_ei, m_events));
+  m_events->adoptBuffer(new EiEventQueueBuffer(m_ei, m_events));
 }
 
 void EiScreen::cleanupEi()
@@ -160,7 +165,16 @@ void *EiScreen::getEventTarget() const
 
 bool EiScreen::getClipboard(ClipboardID id, IClipboard *clipboard) const
 {
-  return false;
+  if (!m_clipboard || !m_clipboard->isAvailable()) {
+    return false;
+  }
+
+  const auto sourceClipboard = m_clipboard->getClipboard(id);
+  if (!sourceClipboard) {
+    return false;
+  }
+
+  return IClipboard::copy(clipboard, sourceClipboard);
 }
 
 void EiScreen::getShape(int32_t &x, int32_t &y, int32_t &w, int32_t &h) const
@@ -179,7 +193,8 @@ void EiScreen::getCursorPos(int32_t &x, int32_t &y) const
 
 void EiScreen::reconfigure(uint32_t activeSides)
 {
-  LOG((CLOG_DEBUG "active sides: %x", activeSides));
+  const static auto sidesText = sidesMaskToString(activeSides);
+  LOG_DEBUG("active sides: %s (0x%02x)", sidesText.c_str(), activeSides);
   m_activeSides = activeSides;
 }
 
@@ -236,7 +251,7 @@ std::int32_t EiScreen::getJumpZoneSize() const
   return 1;
 }
 
-bool EiScreen::isAnyMouseButtonDown(uint32_t &buttonID) const
+bool EiScreen::isAnyMouseButtonDown(uint32_t &) const
 {
   return false;
 }
@@ -298,38 +313,43 @@ void EiScreen::fakeMouseRelativeMove(int32_t dx, int32_t dy) const
   ei_device_frame(m_eiPointer, ei_now(m_ei));
 }
 
-void EiScreen::fakeMouseWheel(int32_t xDelta, int32_t yDelta) const
+void EiScreen::fakeMouseWheel(ScrollDelta delta) const
 {
   if (!m_eiPointer)
     return;
 
+  delta = applyScrollModifier(delta);
   // libei and deskflow seem to use opposite directions, so we have
   // to send EI the opposite of the value received if we want to remain
   // compatible with other platforms (including X11).
-  ei_device_scroll_discrete(m_eiPointer, -xDelta, -yDelta);
+  ei_device_scroll_discrete(m_eiPointer, -delta.x, -delta.y);
   ei_device_frame(m_eiPointer, ei_now(m_ei));
 }
 
-void EiScreen::fakeKey(uint32_t keycode, bool is_down) const
+void EiScreen::fakeKey(uint32_t keycode, bool isDown) const
 {
   if (!m_eiKeyboard)
     return;
 
-  auto xkb_keycode = keycode + 8;
-  m_keyState->updateXkbState(xkb_keycode, is_down);
-  ei_device_keyboard_key(m_eiKeyboard, keycode, is_down);
+  auto xkbKeycode = keycode + 8;
+  m_keyState->updateXkbState(xkbKeycode, isDown);
+  ei_device_keyboard_key(m_eiKeyboard, keycode, isDown);
   ei_device_frame(m_eiKeyboard, ei_now(m_ei));
 }
 
 void EiScreen::enable()
 {
   // Nothing really to be done here
+  if (m_clipboard && m_clipboard->isAvailable()) {
+    m_clipboard->startMonitoring();
+  }
 }
 
 void EiScreen::disable()
 {
-  // Nothing really to be done here, maybe cleanup in the future but ideally
-  // that's handled elsewhere
+  if (m_clipboard && m_clipboard->isAvailable()) {
+    m_clipboard->stopMonitoring();
+  }
 }
 
 void EiScreen::enter()
@@ -377,12 +397,32 @@ void EiScreen::leave()
 
 bool EiScreen::setClipboard(ClipboardID id, const IClipboard *clipboard)
 {
-  return false;
+  if (!clipboard || !m_clipboard || !m_clipboard->isAvailable()) {
+    return false;
+  }
+
+  IClipboard *targetClipboard = m_clipboard->getClipboard(id);
+  if (!targetClipboard) {
+    return false;
+  }
+
+  return IClipboard::copy(targetClipboard, clipboard);
 }
 
 void EiScreen::checkClipboards()
 {
   // do nothing, we're always up to date
+  if (!m_clipboard || !m_clipboard->isAvailable()) {
+    return;
+  }
+
+  if (m_clipboard->hasChanged()) {
+    // Send clipboard change events for all clipboard types
+    for (ClipboardID id = 0; id < kClipboardEnd; ++id) {
+      sendClipboardEvent(EventTypes::ClipboardChanged, id);
+    }
+    m_clipboard->resetChanged();
+  }
 }
 
 void EiScreen::openScreensaver(bool notify)
@@ -409,11 +449,6 @@ void EiScreen::resetOptions()
 void EiScreen::setOptions(const OptionsList &options)
 {
   // We don't have ei-specific options, nothing to do here
-}
-
-void EiScreen::setSequenceNumber(uint32_t seqNum)
-{
-  // FIXME: what is this used for?
 }
 
 bool EiScreen::isPrimary() const
@@ -519,6 +554,25 @@ void EiScreen::sendEvent(EventTypes type, void *data)
   m_events->addEvent(Event(type, getEventTarget(), data));
 }
 
+void EiScreen::sendClipboardEvent(EventTypes type, ClipboardID id) const
+{
+  auto *info = static_cast<ClipboardInfo *>(malloc(sizeof(ClipboardInfo)));
+  if (info == nullptr) {
+    LOG_ERR("malloc failed for ClipboardInfo");
+    return;
+  }
+  info->m_id = id;
+  info->m_sequenceNumber = m_sequenceNumber;
+
+  // Use const_cast to call non-const sendEvent from const method
+  const_cast<EiScreen *>(this)->sendEvent(type, info);
+}
+
+void EiScreen::setSequenceNumber(uint32_t seqNum)
+{
+  m_sequenceNumber = seqNum;
+}
+
 ButtonID EiScreen::mapButtonFromEvdev(ei_event *event) const
 {
   switch (ei_event_button_get_button(event)) {
@@ -539,7 +593,7 @@ ButtonID EiScreen::mapButtonFromEvdev(ei_event *event) const
   return kButtonNone;
 }
 
-bool EiScreen::onHotkey(KeyID keyid, bool is_pressed, KeyModifierMask mask)
+bool EiScreen::onHotkey(KeyID keyid, bool isPressed, KeyModifierMask mask)
 {
   auto it = m_hotkeys.find(keyid);
 
@@ -551,7 +605,7 @@ bool EiScreen::onHotkey(KeyID keyid, bool is_pressed, KeyModifierMask mask)
   // but we don't put a limitation on modifiers in the hotkeys. So some
   // key combinations may not work correctly, more effort is needed here.
   if (auto id = it->second.findByMask(mask); id != 0) {
-    EventTypes type = is_pressed ? EventTypes::PrimaryScreenHotkeyDown : EventTypes::PrimaryScreenHotkeyUp;
+    EventTypes type = isPressed ? EventTypes::PrimaryScreenHotkeyDown : EventTypes::PrimaryScreenHotkeyUp;
     sendEvent(type, HotKeyInfo::alloc(id));
     return true;
   }
@@ -566,18 +620,26 @@ void EiScreen::onKeyEvent(ei_event *event)
   bool pressed = ei_event_keyboard_get_key_is_press(event);
   KeyID keyid = m_keyState->mapKeyFromKeyval(keyval);
   auto keybutton = static_cast<KeyButton>(keyval);
+  bool repeat;
 
   m_keyState->updateXkbState(keyval, pressed);
   KeyModifierMask mask = m_keyState->pollActiveModifiers();
 
-  LOG_DEBUG1("event: key %s keycode=%d keyid=%d mask=0x%x", pressed ? "press" : "release", keycode, keyid, mask);
+  repeat = pressed && m_lastPressed == keyid && keyid != kKeyNone;
+
+  m_lastPressed = pressed ? keyid : kKeyNone;
+
+  LOG_DEBUG1(
+      "event: key %s%s keycode=%d keyid=%d mask=0x%x", pressed ? "press" : "release", repeat ? " (repeat)" : "",
+      keycode, keyid, mask
+  );
 
   if (m_isPrimary && onHotkey(keyid, pressed, mask)) {
     return;
   }
 
   if (keyid != kKeyNone) {
-    m_keyState->sendKeyEvent(getEventTarget(), pressed, false, keyid, mask, 1, keybutton);
+    m_keyState->sendKeyEvent(getEventTarget(), pressed, repeat, keyid, mask, 1, keybutton);
   }
 }
 
@@ -605,12 +667,12 @@ void EiScreen::onPointerScrollEvent(ei_event *event)
 {
   // Ratio of 10 pixels == one wheel click because that's what mutter/gtk
   // use (for historical reasons).
-  const int PIXELS_PER_WHEEL_CLICK = 10;
+  static const int s_pixelsPerWheelClick = 10;
   // Our logical wheel clicks are multiples 120, so we
   // convert between the two and keep the remainders because
   // we will very likely get subpixel scroll events.
-  // This means a single pixel is 120/PIXEL_TO_WHEEL_RATIO in wheel values.
-  const int PIXEL_TO_WHEEL_RATIO = 120 / PIXELS_PER_WHEEL_CLICK;
+  // This means a single pixel is 120/s_pixelToWheelRation in wheel values.
+  const int s_pixelToWheelRatio = s_scrollDelta / s_pixelsPerWheelClick;
 
   assert(m_isPrimary);
 
@@ -643,7 +705,7 @@ void EiScreen::onPointerScrollEvent(ei_event *event)
   if (x != 0 || y != 0)
     sendEvent(
         EventTypes::PrimaryScreenWheel,
-        WheelInfo::alloc((int32_t)-x * PIXEL_TO_WHEEL_RATIO, (int32_t)-y * PIXEL_TO_WHEEL_RATIO)
+        WheelInfo::alloc((int32_t)-x * s_pixelToWheelRatio, (int32_t)-y * s_pixelToWheelRatio)
     );
 
   remainder->x = rx;
@@ -679,19 +741,19 @@ void EiScreen::onMotionEvent(ei_event *event)
   if (m_isOnScreen) {
     LOG_DEBUG("event: motion on primary x=%i y=%i)", m_cursorX, m_cursorY);
     sendEvent(EventTypes::PrimaryScreenMotionOnPrimary, MotionInfo::alloc(m_cursorX, m_cursorY));
-    if (m_portalInputCapture->is_active()) {
+    if (m_portalInputCapture->isActive()) {
       m_portalInputCapture->release();
     }
   } else {
     m_bufferDX += dx;
     m_bufferDY += dy;
-    auto pixel_dx = static_cast<std::int32_t>(m_bufferDX);
-    auto pixel_dy = static_cast<std::int32_t>(m_bufferDY);
-    if (pixel_dx || pixel_dy) {
-      LOG_DEBUG1("event: motion on secondary x=%d y=%d", pixel_dx, pixel_dy);
-      sendEvent(EventTypes::PrimaryScreenMotionOnSecondary, MotionInfo::alloc(pixel_dx, pixel_dy));
-      m_bufferDX -= pixel_dx;
-      m_bufferDY -= pixel_dy;
+    auto pixelDx = static_cast<std::int32_t>(m_bufferDX);
+    auto pixelDy = static_cast<std::int32_t>(m_bufferDY);
+    if (pixelDx || pixelDy) {
+      LOG_DEBUG1("event: motion on secondary x=%d y=%d", pixelDx, pixelDy);
+      sendEvent(EventTypes::PrimaryScreenMotionOnSecondary, MotionInfo::alloc(pixelDx, pixelDy));
+      m_bufferDX -= pixelDx;
+      m_bufferDY -= pixelDy;
     }
   }
 }
@@ -721,7 +783,7 @@ void EiScreen::handlePortalSessionClosed()
   initEi();
 }
 
-void EiScreen::handleSystemEvent(const Event &sysevent)
+void EiScreen::handleSystemEvent(const Event &)
 {
   std::scoped_lock lock{m_mutex};
 
@@ -775,7 +837,7 @@ void EiScreen::handleSystemEvent(const Event &sysevent)
       if (m_isPrimary) {
         LOG_DEBUG("re-allocating portal input capture connection and releasing active captures");
         if (m_portalInputCapture) {
-          if (m_portalInputCapture->is_active()) {
+          if (m_portalInputCapture->isActive()) {
             m_portalInputCapture->release();
           }
           delete m_portalInputCapture;

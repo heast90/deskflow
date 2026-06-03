@@ -8,8 +8,8 @@
 #include "net/NetworkAddress.h"
 
 #include "arch/Arch.h"
-#include "arch/XArch.h"
-#include "net/XSocket.h"
+#include "arch/ArchException.h"
+#include "net/SocketException.h"
 
 #include <algorithm>
 #include <cstdlib>
@@ -43,7 +43,7 @@ NetworkAddress::NetworkAddress(const std::string &hostname, int port) : m_hostna
     try {
       m_port = std::stoi(m_hostname.substr(hostIt + 1));
     } catch (...) {
-      throw XSocketAddress(XSocketAddress::SocketError::BadPort, m_hostname, m_port);
+      throw SocketAddressException(SocketAddressException::SocketError::BadPort, m_hostname, m_port);
     }
 
     auto endHostnameIt = static_cast<int>(hostIt);
@@ -57,19 +57,19 @@ NetworkAddress::NetworkAddress(const std::string &hostname, int port) : m_hostna
 
       // bad syntax of ipv6 with port
       if (hostIt == std::string::npos) {
-        throw XSocketAddress(XSocketAddress::SocketError::Unknown, m_hostname, m_port);
+        throw SocketAddressException(SocketAddressException::SocketError::Unknown, m_hostname, m_port);
       }
 
       auto portSuffix = m_hostname.substr(hostIt + portDelimeter.size());
       // port is implied but omitted
       if (portSuffix.empty()) {
-        throw XSocketAddress(XSocketAddress::SocketError::BadPort, m_hostname, m_port);
+        throw SocketAddressException(SocketAddressException::SocketError::BadPort, m_hostname, m_port);
       }
       try {
         m_port = std::stoi(portSuffix);
       } catch (...) {
         // port is not a number
-        throw XSocketAddress(XSocketAddress::SocketError::BadPort, m_hostname, m_port);
+        throw SocketAddressException(SocketAddressException::SocketError::BadPort, m_hostname, m_port);
       }
 
       auto endHostnameIt = static_cast<int>(hostIt) - 1;
@@ -78,7 +78,7 @@ NetworkAddress::NetworkAddress(const std::string &hostname, int port) : m_hostna
 
     // ensure that ipv6 link-local adress ended with scope id
     if (m_hostname.rfind("fe80:", 0) == 0 && m_hostname.find('%') == std::string::npos) {
-      throw XSocketAddress(XSocketAddress::SocketError::Unknown, m_hostname, m_port);
+      throw SocketAddressException(SocketAddressException::SocketError::Unknown, m_hostname, m_port);
     }
   }
 
@@ -122,47 +122,46 @@ size_t NetworkAddress::resolve(size_t index)
   }
 
   try {
-    // if hostname is empty then use wildcard address otherwise look
-    // up the name.
     if (m_hostname.empty()) {
       m_address = ARCH->newAnyAddr(IArchNetwork::AddressFamily::INet);
       resolvedAddressesCount = 1;
     } else {
-      // Logic for temporary filtring only ipv4 addresses
-      std::vector<ArchNetAddress> ipv4OnlyAddresses;
+      std::vector<ArchNetAddress> ipAddresses;
       {
         auto addresses = ARCH->nameToAddr(m_hostname);
         for (auto address : addresses) {
-          if (ARCH->getAddrFamily(address) == IArchNetwork::AddressFamily::INet) {
-            ipv4OnlyAddresses.emplace_back(address);
+          if (ARCH->getAddrFamily(address) != IArchNetwork::AddressFamily::Unknown) {
+            ipAddresses.emplace_back(address);
           } else {
             ARCH->closeAddr(address);
           }
         }
       }
 
-      resolvedAddressesCount = ipv4OnlyAddresses.size();
-      assert(resolvedAddressesCount > 0);
+      resolvedAddressesCount = ipAddresses.size();
+      if (resolvedAddressesCount <= 0) {
+        throw ArchNetworkNameUnknownException("Hostname lookup failed");
+      }
       if (index < resolvedAddressesCount - 1) {
-        m_address = ipv4OnlyAddresses[index];
+        m_address = ipAddresses[index];
       } else {
-        m_address = ipv4OnlyAddresses[resolvedAddressesCount - 1];
+        m_address = ipAddresses[resolvedAddressesCount - 1];
       }
 
-      for (auto address : ipv4OnlyAddresses) {
+      for (auto address : ipAddresses) {
         if (m_address != address) {
           ARCH->closeAddr(address);
         }
       }
     }
-  } catch (XArchNetworkNameUnknown &) {
-    throw XSocketAddress(XSocketAddress::SocketError::NotFound, m_hostname, m_port);
-  } catch (XArchNetworkNameNoAddress &) {
-    throw XSocketAddress(XSocketAddress::SocketError::NoAddress, m_hostname, m_port);
-  } catch (XArchNetworkNameUnsupported &) {
-    throw XSocketAddress(XSocketAddress::SocketError::Unsupported, m_hostname, m_port);
-  } catch (XArchNetworkName &) {
-    throw XSocketAddress(XSocketAddress::SocketError::Unknown, m_hostname, m_port);
+  } catch (ArchNetworkNameUnknownException &) {
+    throw SocketAddressException(SocketAddressException::SocketError::NotFound, m_hostname, m_port);
+  } catch (ArchNetworkNameNoAddressException &) {
+    throw SocketAddressException(SocketAddressException::SocketError::NoAddress, m_hostname, m_port);
+  } catch (ArchNetworkNameUnsupportedException &) {
+    throw SocketAddressException(SocketAddressException::SocketError::Unsupported, m_hostname, m_port);
+  } catch (ArchNetworkNameException &) {
+    throw SocketAddressException(SocketAddressException::SocketError::Unknown, m_hostname, m_port);
   }
 
   // set port in address
@@ -174,11 +173,6 @@ size_t NetworkAddress::resolve(size_t index)
 bool NetworkAddress::operator==(const NetworkAddress &addr) const
 {
   return m_address == addr.m_address || ARCH->isEqualAddr(m_address, addr.m_address);
-}
-
-bool NetworkAddress::operator!=(const NetworkAddress &addr) const
-{
-  return !operator==(addr);
 }
 
 bool NetworkAddress::isValid() const
@@ -205,6 +199,6 @@ void NetworkAddress::checkPort() const
 {
   // check port number
   if (m_port < 0 || m_port > 65535) {
-    throw XSocketAddress(XSocketAddress::SocketError::BadPort, m_hostname, m_port);
+    throw SocketAddressException(SocketAddressException::SocketError::BadPort, m_hostname, m_port);
   }
 }

@@ -16,12 +16,10 @@ using ::testing::_;
 using ::testing::Invoke;
 using ::testing::NiceMock;
 using ::testing::Return;
-using ::testing::ReturnRef;
-using ::testing::SaveArg;
 
 void stubPollPressedKeys(IKeyState::KeyButtonSet &pressedKeys);
 
-void assertMaskIsOne(ForeachKeyCallback cb, void *userData);
+void assertMaskIsOne(ForeachKeyCallback, void *userData);
 
 const deskflow::KeyMap::KeyItem *stubMapKey(
     deskflow::KeyMap::Keystrokes &keys, KeyID id, int32_t group, deskflow::KeyMap::ModifierToKeys &activeModifiers,
@@ -290,7 +288,7 @@ TEST(KeyStateTests, fakeKeyRepeat_validKey_returnsTrue)
   MockEventQueue eventQueue;
   KeyStateImpl keyState(eventQueue, keyMap);
   s_stubKeyItem.m_client = 0;
-  s_stubKeystroke.m_type = deskflow::KeyMap::Keystroke::kButton;
+  s_stubKeystroke.m_type = deskflow::KeyMap::Keystroke::KeyType::Button;
   s_stubKeystroke.m_data.m_button.m_button = 2;
 
   // set the button to 1 for fakeKeyDown call
@@ -406,7 +404,7 @@ void stubPollPressedKeys(IKeyState::KeyButtonSet &pressedKeys)
   pressedKeys.insert(1);
 }
 
-void assertMaskIsOne(ForeachKeyCallback cb, void *userData)
+void assertMaskIsOne(ForeachKeyCallback, void *userData)
 {
   ASSERT_EQ(1, ((KeyState::AddActiveModifierContext *)userData)->m_mask);
 }

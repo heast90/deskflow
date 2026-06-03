@@ -1,7 +1,7 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
  * SPDX-FileCopyrightText: (C) 2025 Deskflow Developers
- * SPDX-FileCopyrightText: (C) 2012 - 2016 Symless Ltd.
+ * SPDX-FileCopyrightText: (C) 2012 - 2016, 2026 Symless Ltd.
  * SPDX-FileCopyrightText: (C) 2002 Chris Schoeneman
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
  */
@@ -10,16 +10,13 @@
 
 #include "deskflow/IClient.h"
 
-#include "HelloBack.h"
 #include "base/EventTypes.h"
-#include "deskflow/ClientArgs.h"
-#include "deskflow/Clipboard.h"
-#include "deskflow/INode.h"
-#include "mt/CondVar.h"
+#include "deskflow/IClipboard.h"
 #include "net/NetworkAddress.h"
 
-#include <memory>
+#include <climits>
 
+class Event;
 class EventQueueTimer;
 namespace deskflow {
 class Screen;
@@ -38,7 +35,7 @@ class TCPSocket;
 /*!
 This class implements the top-level client algorithms for deskflow.
 */
-class Client : public IClient, public INode
+class Client : public IClient
 {
 public:
   class FailInfo
@@ -60,7 +57,7 @@ public:
   */
   Client(
       IEventQueue *events, const std::string &name, const NetworkAddress &address, ISocketFactory *socketFactory,
-      deskflow::Screen *screen, deskflow::ClientArgs const &args
+      deskflow::Screen *screen
   );
   Client(Client const &) = delete;
   Client(Client &&) = delete;
@@ -78,6 +75,7 @@ public:
   the client is trying to connect or is already connected.
   */
   void connect(size_t addressIndex = 0);
+  void setServerAddress(const NetworkAddress &address);
 
   //! Disconnect
   /*!
@@ -157,7 +155,7 @@ public:
 
 private:
   void sendClipboard(ClipboardID);
-  void sendEvent(EventTypes, void *);
+  void sendEvent(deskflow::EventTypes);
   void sendConnectionFailedEvent(const char *msg);
   void setupConnecting();
   void setupConnection();
@@ -202,7 +200,5 @@ private:
   bool m_useSecureNetwork = false;
   bool m_enableClipboard = true;
   size_t m_maximumClipboardSize = INT_MAX;
-  deskflow::ClientArgs m_args;
   size_t m_resolvedAddressesCount = 0;
-  std::unique_ptr<deskflow::client::HelloBack> m_pHelloBack;
 };

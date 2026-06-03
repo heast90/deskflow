@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2024 Chris Rizzitello <sithlord48@gmail.com>
+# SPDX-FileCopyrightText: (C) 2024 Chris Rizzitello <sithlord48@gmail.com>
 # SPDX-License-Identifier: MIT
 
 # Copy License with txt ext for picky package creation tools
@@ -7,7 +7,6 @@ file(COPY_FILE
   ${CMAKE_CURRENT_BINARY_DIR}/LICENSE.txt
   ONLY_IF_DIFFERENT
 )
-
 
 # Generic Package Items
 set(CPACK_STRIP_FILES TRUE)

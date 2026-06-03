@@ -8,12 +8,11 @@
 
 #pragma once
 
+#include "base/DirectionTypes.h"
 #include "deskflow/IPlatformScreen.h"
 #include "deskflow/KeyTypes.h"
 #include "deskflow/MouseTypes.h"
-#include "deskflow/ProtocolTypes.h"
 
-#include <map>
 #include <set>
 
 class PrimaryClient;
@@ -77,7 +76,7 @@ public:
   class MouseButtonCondition : public Condition
   {
   public:
-    MouseButtonCondition(IEventQueue *events, IPlatformScreen::ButtonInfo *);
+    MouseButtonCondition(IEventQueue *events, const IPlatformScreen::ButtonInfo &);
     MouseButtonCondition(IEventQueue *events, ButtonID, KeyModifierMask mask);
     ~MouseButtonCondition() override = default;
 
@@ -139,7 +138,7 @@ public:
       kToggle
     };
 
-    LockCursorToScreenAction(IEventQueue *events, Mode = kToggle);
+    explicit LockCursorToScreenAction(IEventQueue *events, Mode = kToggle);
 
     Mode getMode() const;
 
@@ -161,7 +160,7 @@ public:
       restart
     };
 
-    RestartServer(IEventQueue *events, Mode = restart);
+    explicit RestartServer(Mode = restart);
 
     Mode getMode() const;
 
@@ -172,7 +171,6 @@ public:
 
   private:
     Mode m_mode;
-    IEventQueue *m_events;
   };
 
   // SwitchToScreenAction
@@ -211,6 +209,21 @@ public:
     IEventQueue *m_events;
   };
 
+  // SwitchToNextScreenAction
+  class SwitchToNextScreenAction : public Action
+  {
+  public:
+    explicit SwitchToNextScreenAction(IEventQueue *events);
+
+    // Action overrides
+    Action *clone() const override;
+    std::string format() const override;
+    void perform(const Event &) override;
+
+  private:
+    IEventQueue *m_events;
+  };
+
   // KeyboardBroadcastAction
   class KeyboardBroadcastAction : public Action
   {
@@ -222,8 +235,8 @@ public:
       kToggle
     };
 
-    KeyboardBroadcastAction(IEventQueue *events, Mode = kToggle);
-    KeyboardBroadcastAction(IEventQueue *events, Mode, const std::set<std::string> &screens);
+    explicit KeyboardBroadcastAction(IEventQueue *events, Mode = kToggle);
+    explicit KeyboardBroadcastAction(IEventQueue *events, Mode, const std::set<std::string> &screens);
 
     Mode getMode() const;
     std::set<std::string> getScreens() const;
@@ -273,15 +286,15 @@ public:
   class MouseButtonAction : public Action
   {
   public:
-    MouseButtonAction(IEventQueue *events, IPlatformScreen::ButtonInfo *adoptedInfo, bool press);
+    MouseButtonAction(IEventQueue *events, const IPlatformScreen::ButtonInfo &adoptedInfo, bool press);
     MouseButtonAction(MouseButtonAction const &) = delete;
     MouseButtonAction(MouseButtonAction &&) = delete;
-    ~MouseButtonAction() override;
+    ~MouseButtonAction() override = default;
 
     MouseButtonAction &operator=(MouseButtonAction const &) = delete;
     MouseButtonAction &operator=(MouseButtonAction &&) = delete;
 
-    const IPlatformScreen::ButtonInfo *getInfo() const;
+    const IPlatformScreen::ButtonInfo &getInfo() const;
     bool isOnPress() const;
 
     // Action overrides
@@ -293,7 +306,7 @@ public:
     virtual const char *formatName() const;
 
   private:
-    IPlatformScreen::ButtonInfo *m_buttonInfo;
+    IPlatformScreen::ButtonInfo m_buttonInfo;
     bool m_press;
     IEventQueue *m_events;
   };
@@ -383,8 +396,6 @@ public:
 
   //! Compare filters
   bool operator==(const InputFilter &) const;
-  //! Compare filters
-  bool operator!=(const InputFilter &) const;
 
 private:
   // event handling

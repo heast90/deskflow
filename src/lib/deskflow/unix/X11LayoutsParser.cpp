@@ -7,7 +7,6 @@
 
 #if WINAPI_XWINDOWS
 #include <algorithm>
-#include <fstream>
 #include <sstream>
 
 #include <QDomDocument>
@@ -36,7 +35,7 @@ bool X11LayoutsParser::readXMLConfigItemElem(const QDomNode &node, std::vector<L
 {
   auto configItemElem = node.firstChildElement("configItem");
   if (configItemElem.isNull()) {
-    LOG((CLOG_WARN "failed to read \"configItem\" in xml file"));
+    LOG_WARN("failed to read \"configItem\" in xml file");
     return false;
   }
 
@@ -60,7 +59,7 @@ std::vector<X11LayoutsParser::Lang> X11LayoutsParser::getAllLanguageData(const s
 
   QFile inFile(QString::fromStdString(pathToEvdevFile));
   if (!inFile.open(QIODevice::ReadOnly)) {
-    LOG((CLOG_WARN "unable to open %s", pathToEvdevFile.c_str()));
+    LOG_WARN("unable to open %s", pathToEvdevFile.c_str());
     return allCodes;
   }
 
@@ -69,13 +68,13 @@ std::vector<X11LayoutsParser::Lang> X11LayoutsParser::getAllLanguageData(const s
 
   const auto xkbConfigElem = xmlDoc.firstChildElement("xkbConfigRegistry");
   if (xkbConfigElem.isNull()) {
-    LOG((CLOG_WARN "failed to read xkbConfigRegistry in %s", pathToEvdevFile.c_str()));
+    LOG_WARN("failed to read xkbConfigRegistry in %s", pathToEvdevFile.c_str());
     return allCodes;
   }
 
   auto layoutListElem = xkbConfigElem.firstChildElement("layoutList");
   if (layoutListElem.isNull()) {
-    LOG((CLOG_WARN "failed to read layoutList in %s", pathToEvdevFile.c_str()));
+    LOG_WARN("failed to read layoutList in %s", pathToEvdevFile.c_str());
     return allCodes;
   }
 
@@ -86,8 +85,8 @@ std::vector<X11LayoutsParser::Lang> X11LayoutsParser::getAllLanguageData(const s
       continue;
 
     auto variantListElem = item.namedItem("variantList").childNodes();
-    for (int i = 0; i < variantListElem.count(); i++)
-      readXMLConfigItemElem(variantListElem.at(i), allCodes.back().variants);
+    for (int j = 0; j < variantListElem.count(); j++)
+      readXMLConfigItemElem(variantListElem.at(j), allCodes.back().variants);
   }
   return allCodes;
 }
@@ -95,11 +94,11 @@ std::vector<X11LayoutsParser::Lang> X11LayoutsParser::getAllLanguageData(const s
 void X11LayoutsParser::appendVectorUniq(const std::vector<std::string> &source, std::vector<std::string> &dst)
 {
   for (const auto &elem : source) {
-    if (std::find_if(dst.begin(), dst.end(), [elem](const std::string_view &s) { return s == elem; }) == dst.end()) {
+    if (std::ranges::find_if(dst, [&elem](const std::string_view &s) { return s == elem; }) == dst.end()) {
       dst.push_back(elem);
     }
   }
-};
+}
 
 void X11LayoutsParser::convertLayoutToISO639_2(
     const std::string &pathToEvdevFile, bool needToReloadEvdev, const std::vector<std::string> &layoutNames,
@@ -113,14 +112,13 @@ void X11LayoutsParser::convertLayoutToISO639_2(
   for (size_t i = 0; i < layoutNames.size(); i++) {
     const auto &layoutName = layoutNames[i];
     if (layoutNames[i].empty()) {
-      LOG((CLOG_DEBUG "skip converting empty layout name"));
+      LOG_DEBUG("skip converting empty layout name");
       continue;
     }
 
-    auto langIter =
-        std::find_if(allLang.begin(), allLang.end(), [&layoutName](const Lang &l) { return l.name == layoutName; });
+    auto langIter = std::ranges::find_if(allLang, [&layoutName](const Lang &l) { return l.name == layoutName; });
     if (langIter == allLang.end()) {
-      LOG((CLOG_WARN "language \"%s\" is unknown", layoutNames[i].c_str()));
+      LOG_WARN("language \"%s\" is unknown", layoutNames[i].c_str());
       continue;
     }
 
@@ -131,9 +129,7 @@ void X11LayoutsParser::convertLayoutToISO639_2(
       } else {
         const auto &variantName = layoutVariantNames[i];
         auto langVariantIter =
-            std::find_if(langIter->variants.begin(), langIter->variants.end(), [&variantName](const Lang &l) {
-              return l.name == variantName;
-            });
+            std::ranges::find_if(langIter->variants, [&variantName](const Lang &l) { return l.name == variantName; });
         if (langVariantIter == langIter->variants.end()) {
           LOG(
               (CLOG_WARN "variant \"%s\" of language \"%s\" is unknown", layoutVariantNames[i].c_str(),
@@ -173,25 +169,25 @@ std::vector<std::string> X11LayoutsParser::getX11LanguageList(const std::string 
   return convertISO639_2ToISO639_1(iso639_2Codes);
 }
 
-std::string X11LayoutsParser::convertLayotToISO(
+std::string X11LayoutsParser::convertLayoutToISO(
     const std::string &pathToEvdevFile, const std::string &layoutLangCode, bool needToReloadFiles
 )
 {
   if (layoutLangCode.empty()) {
-    LOG((CLOG_DEBUG1 "skip converting empty layout lang code"));
+    LOG_DEBUG1("skip converting empty layout lang code");
     return "";
   }
 
   std::vector<std::string> iso639_2Codes;
   convertLayoutToISO639_2(pathToEvdevFile, needToReloadFiles, {layoutLangCode}, {""}, iso639_2Codes);
   if (iso639_2Codes.empty()) {
-    LOG((CLOG_WARN "failed to convert layout lang code: \"%s\"", layoutLangCode.c_str()));
+    LOG_WARN("failed to convert layout lang code: \"%s\"", layoutLangCode.c_str());
     return "";
   }
 
   auto iso639_1Codes = convertISO639_2ToISO639_1(iso639_2Codes);
   if (iso639_1Codes.empty()) {
-    LOG((CLOG_WARN "failed to convert ISO639/2 lang code to ISO639/1"));
+    LOG_WARN("failed to convert ISO639/2 lang code to ISO639/1");
     return "";
   }
 
@@ -202,12 +198,11 @@ std::vector<std::string> X11LayoutsParser::convertISO639_2ToISO639_1(const std::
 {
   std::vector<std::string> result;
   for (const auto &isoCode : iso639_2Codes) {
-    const auto &tableIter =
-        std::find_if(ISO_Table.begin(), ISO_Table.end(), [&isoCode](const std::pair<std::string, std::string> &c) {
-          return c.first == isoCode;
-        });
+    const auto &tableIter = std::ranges::find_if(ISO_Table, [&isoCode](const std::pair<std::string, std::string> &c) {
+      return c.first == isoCode;
+    });
     if (tableIter == ISO_Table.end()) {
-      LOG((CLOG_WARN "the ISO 639-2 code \"%s\" is missed in table", isoCode.c_str()));
+      LOG_WARN("the ISO 639-2 code \"%s\" is missed in table", isoCode.c_str());
       continue;
     }
 

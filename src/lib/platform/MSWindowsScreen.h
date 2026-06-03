@@ -8,7 +8,6 @@
 
 #pragma once
 
-#include "deskflow/ClientArgs.h"
 #include "deskflow/PlatformScreen.h"
 #include "platform/MSWindowsHook.h"
 #include "platform/MSWindowsPowerManager.h"
@@ -30,10 +29,7 @@ class MSWindowsDropTarget;
 class MSWindowsScreen : public PlatformScreen
 {
 public:
-  MSWindowsScreen(
-      bool isPrimary, bool noHooks, IEventQueue *events, bool enableLangSync = false,
-      deskflow::ClientScrollDirection scrollDirection = deskflow::ClientScrollDirection::Normal
-  );
+  MSWindowsScreen(bool isPrimary, bool useHooks, IEventQueue *events, bool enableLangSync = false);
   ~MSWindowsScreen() override;
 
   //! @name manipulators
@@ -100,7 +96,7 @@ public:
   void fakeMouseButton(ButtonID id, bool press) override;
   void fakeMouseMove(int32_t x, int32_t y) override;
   void fakeMouseRelativeMove(int32_t dx, int32_t dy) const override;
-  void fakeMouseWheel(int32_t xDelta, int32_t yDelta) const override;
+  void fakeMouseWheel(ScrollDelta delta) const override;
 
   // IKeyState overrides
   virtual void updateKeys();
@@ -142,7 +138,7 @@ private:
   ATOM createWindowClass() const;
   ATOM createDeskWindowClass(bool isPrimary) const;
   void destroyClass(ATOM windowClass) const;
-  HWND createWindow(ATOM windowClass, const char *name) const;
+  HWND createWindow(ATOM windowClass, const wchar_t *name) const;
   void destroyWindow(HWND) const;
 
   // convenience function to send events
@@ -207,17 +203,19 @@ private: // HACK
   bool mapPressFromEvent(WPARAM msg, LPARAM button) const;
 
   // job to update the key state
-  void updateKeysCB(void *);
+  void updateKeysCB(const void *);
 
-  // determine whether the mouse is hidden by the system and force
-  // it to be displayed if user has entered this secondary screen.
-  void forceShowCursor();
+  // determine whether the mouse is hidden by the system.
+  // if true and on secondary screen, enable mouse keys to show the cursor.
+  // we were previously restoring the old mouse key settings when not needed, but this was causing
+  // issues where the mouse cursor becomes permanently hidden, even if there is a real mouse
+  // attached to the system; this could be a windows bug, but losing your mouse is a nightmare
+  // so we shouldn't risk doing that.
+  void setupMouseKeys();
 
-  // forceShowCursor uses MouseKeys to show the cursor.  since we
-  // don't actually want MouseKeys behavior we have to make sure
-  // it applies when NumLock is in whatever state it's not in now.
-  // this method does that.
-  void updateForceShowCursor();
+  // enables the mouse keys accessibility feature to to ensure the
+  // mouse cursor can be shown.
+  void updateMouseKeys();
 
   // our window proc
   static LRESULT CALLBACK wndProc(HWND, UINT, WPARAM, LPARAM);
@@ -253,10 +251,13 @@ private:
   bool m_isPrimary;
 
   // true if hooks are not to be installed (useful for debugging)
-  bool m_noHooks;
+  bool m_useHooks;
 
   // true if mouse has entered the screen
   bool m_isOnScreen;
+
+  // true if the screen is enabled
+  bool m_isEnabled = false;
 
   // our resources
   ATOM m_class = 0;
@@ -315,24 +316,15 @@ private:
   HotKeyToIDMap m_hotKeyToIDMap;
 
   // map of button state
-  bool m_buttons[1 + kButtonExtra0 + 1];
+  bool m_buttons[NumButtonIDs];
 
-  // the system shows the mouse cursor when an internal display count
-  // is >= 0.  this count is maintained per application but there's
-  // apparently a system wide count added to the application's count.
-  // this system count is 0 if there's a mouse attached to the system
-  // and -1 otherwise.  the MouseKeys accessibility feature can modify
-  // this system count by making the system appear to have a mouse.
-  //
-  // m_hasMouse is true iff there's a mouse attached to the system or
-  // MouseKeys is simulating one.  we track this so we can force the
+  // m_hasMouse is true if there's a mouse attached to the system or
+  // mouse keys is simulating one.  we track this so we can force the
   // cursor to be displayed when the user has entered this screen.
-  // m_showingMouse is true when we're doing that.
   bool m_hasMouse;
-  bool m_showingMouse = false;
-  bool m_gotOldMouseKeys;
+
+  bool m_gotMouseKeys = false;
   MOUSEKEYS m_mouseKeys;
-  MOUSEKEYS m_oldMouseKeys;
 
   MSWindowsHook m_hook;
 

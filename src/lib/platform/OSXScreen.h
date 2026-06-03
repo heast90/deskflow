@@ -8,7 +8,6 @@
 
 #pragma once
 
-#include "base/EventTypes.h"
 #include "deskflow/PlatformScreen.h"
 #include "platform/OSXClipboard.h"
 #include "platform/OSXPowerManager.h"
@@ -44,10 +43,7 @@ class Mutex;
 class OSXScreen : public PlatformScreen
 {
 public:
-  OSXScreen(
-      IEventQueue *events, bool isPrimary, bool enableLangSync = false,
-      deskflow::ClientScrollDirection scrollDirection = deskflow::ClientScrollDirection::Normal
-  );
+  OSXScreen(IEventQueue *events, bool isPrimary, bool enableLangSync = false);
 
   virtual ~OSXScreen();
 
@@ -78,7 +74,7 @@ public:
   void fakeMouseButton(ButtonID id, bool press) override;
   void fakeMouseMove(int32_t x, int32_t y) override;
   void fakeMouseRelativeMove(int32_t dx, int32_t dy) const override;
-  void fakeMouseWheel(int32_t xDelta, int32_t yDelta) const override;
+  void fakeMouseWheel(ScrollDelta delta) const override;
 
   // IPlatformScreen overrides
   void enable() override;
@@ -115,7 +111,7 @@ private:
   void sendClipboardEvent(EventTypes type, ClipboardID id) const;
 
   // message handlers
-  bool onMouseMove(CGFloat mx, CGFloat my);
+  bool onMouseMove();
   // mouse button handler.  pressed is true if this is a mousedown
   // event, false if it is a mouseup event.  macButton is the index
   // of the button pressed using the mac button mapping.
@@ -143,9 +139,6 @@ private:
   // map mac scroll wheel value to a deskflow scroll wheel value
   int32_t mapScrollWheelToDeskflow(int32_t) const;
 
-  // map deskflow scroll wheel value to a mac scroll wheel value
-  int32_t mapScrollWheelFromDeskflow(int32_t) const;
-
   // get the current scroll wheel speed
   double getScrollSpeed() const;
 
@@ -156,7 +149,7 @@ private:
   static pascal OSStatus userSwitchCallback(EventHandlerCallRef nextHandler, EventRef theEvent, void *inUserData);
 
   // sleep / wakeup support
-  void watchSystemPowerThread(void *);
+  void watchSystemPowerThread(const void *);
   static void testCanceled(CFRunLoopTimerRef timer, void *info);
   static void powerChangeCallback(void *refcon, io_service_t service, natural_t messageType, void *messageArgument);
   void handlePowerChangeRequest(natural_t messageType, void *messageArgument);

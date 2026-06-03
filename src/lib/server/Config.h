@@ -7,11 +7,10 @@
 
 #pragma once
 
+#include "base/BaseException.h"
 #include "base/String.h"
-#include "base/XBase.h"
 #include "deskflow/IPlatformScreen.h"
 #include "deskflow/OptionTypes.h"
-#include "deskflow/ProtocolTypes.h"
 #include "net/NetworkAddress.h"
 #include "server/InputFilter.h"
 
@@ -35,7 +34,7 @@ template <> struct iterator_traits<deskflow::server::Config>
   using pointer = std::string *;
   using reference = std::string &;
 };
-}; // namespace std
+} // namespace std
 
 namespace deskflow::server {
 
@@ -81,7 +80,6 @@ public:
 
     // compares side and interval
     bool operator==(const CellEdge &) const;
-    bool operator!=(const CellEdge &) const;
 
   private:
     void init(const std::string_view &name, Direction side, const Interval &);
@@ -125,7 +123,6 @@ private:
     bool getLink(Direction side, float position, const CellEdge *&src, const CellEdge *&dst) const;
 
     bool operator==(const Cell &) const;
-    bool operator!=(const Cell &) const;
 
     const_iterator begin() const;
     const_iterator end() const;
@@ -143,7 +140,7 @@ public:
   using link_const_iterator = Cell::const_iterator;
   using internal_const_iterator = CellMap::const_iterator;
   using all_const_iterator = NameMap::const_iterator;
-  class const_iterator : std::iterator_traits<Config>
+  class const_iterator : public std::iterator_traits<Config>
   {
   public:
     explicit const_iterator() = default;
@@ -188,10 +185,6 @@ public:
     bool operator==(const const_iterator &i) const
     {
       return (m_i == i.m_i);
-    }
-    bool operator!=(const const_iterator &i) const
-    {
-      return (m_i != i.m_i);
     }
 
   private:
@@ -422,19 +415,17 @@ public:
 
   //! Compare configurations
   bool operator==(const Config &) const;
-  //! Compare configurations
-  bool operator!=(const Config &) const;
 
   //! Read configuration
   /*!
-  Reads a configuration from a context.  Throws XConfigRead on error
+  Reads a configuration from a context.  Throws ServerConfigReadException on error
   and context is unchanged.
   */
   void read(ConfigReadContext &context);
 
   //! Read configuration
   /*!
-  Reads a configuration from a stream.  Throws XConfigRead on error.
+  Reads a configuration from a stream.  Throws ServerConfigReadException on error.
   */
   friend std::istream &operator>>(std::istream &, Config &);
 
@@ -494,7 +485,7 @@ class ConfigReadContext
 public:
   using ArgList = std::vector<std::string>;
 
-  ConfigReadContext(std::istream &, int32_t firstLine = 1);
+  explicit ConfigReadContext(std::istream &, int32_t firstLine = 1);
   ~ConfigReadContext() = default;
 
   bool readLine(std::string &);
@@ -515,7 +506,7 @@ public:
   ) const;
   IPlatformScreen::KeyInfo *parseKeystroke(const std::string &keystroke) const;
   IPlatformScreen::KeyInfo *parseKeystroke(const std::string &keystroke, const std::set<std::string> &screens) const;
-  IPlatformScreen::ButtonInfo *parseMouse(const std::string &mouse) const;
+  IPlatformScreen::ButtonInfo parseMouse(const std::string &mouse) const;
   KeyModifierMask parseModifier(const std::string &modifiers) const;
   std::istream &getStream() const
   {
@@ -537,15 +528,15 @@ private:
 /*!
 Thrown when a configuration stream cannot be parsed.
 */
-class XConfigRead : public XBase
+class ServerConfigReadException : public BaseException
 {
 public:
-  XConfigRead(const ConfigReadContext &context, const std::string &);
-  XConfigRead(const ConfigReadContext &context, const char *errorFmt, const std::string &arg);
-  ~XConfigRead() throw() override = default;
+  ServerConfigReadException(const ConfigReadContext &context, const std::string &);
+  ServerConfigReadException(const ConfigReadContext &context, const char *errorFmt, const std::string &arg);
+  ~ServerConfigReadException() throw() override = default;
 
 protected:
-  // XBase overrides
+  // BaseException overrides
   std::string getWhat() const throw() override;
 
 private:

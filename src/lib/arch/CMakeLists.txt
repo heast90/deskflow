@@ -1,6 +1,6 @@
-# SPDX-FileCopyrightText: 2024 - 2025 Chris Rizzitello <sithlord48@gmail.com>
-# SPDX-FileCopyrightText: 2012 - 2024 Symless Ltd
-# SPDX-FileCopyrightText: 2009 - 2012 Nick Bolton
+# SPDX-FileCopyrightText: (C) 2024 - 2025 Chris Rizzitello <sithlord48@gmail.com>
+# SPDX-FileCopyrightText: (C) 2012 - 2024 Symless Ltd
+# SPDX-FileCopyrightText: (C) 2009 - 2012 Nick Bolton
 # SPDX-License-Identifier: MIT
 
 # Platform Specific Code
@@ -22,8 +22,6 @@ if(WIN32)
 
 elseif(UNIX)
   set(PLATFORM_CODE
-    unix/ArchDaemonUnix.cpp
-    unix/ArchDaemonUnix.h
     unix/ArchLogUnix.cpp
     unix/ArchLogUnix.h
     unix/ArchMultithreadPosix.cpp
@@ -38,17 +36,16 @@ endif()
 add_library(arch STATIC ${PLATFORM_CODE}
   Arch.cpp
   Arch.h
-  ArchDaemonNone.cpp
   ArchDaemonNone.h
+  ArchException.h
   IArchDaemon.h
   IArchLog.h
   IArchMultithread.h
   IArchNetwork.h
-  ArchString.cpp
-  ArchString.h
-  XArch.h
 )
 
+target_link_libraries (arch PUBLIC common)
+
 if(UNIX)
-  target_link_libraries(arch ${libs})
+  target_link_libraries(arch PUBLIC ${libs})
 endif()

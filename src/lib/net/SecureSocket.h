@@ -7,14 +7,13 @@
 
 #pragma once
 
-#include "io/Filesystem.h"
 #include "net/SecurityLevel.h"
 #include "net/TCPSocket.h"
-#include "net/XSocket.h"
 
 #include <memory>
 #include <mutex>
 
+class Event;
 class IEventQueue;
 class SocketMultiplexer;
 class ISocketMultiplexerJob;
@@ -67,7 +66,7 @@ public:
   JobResult doRead() override;
   JobResult doWrite() override;
   void initSsl(bool server);
-  bool loadCertificates(const std::string &CertFile);
+  bool loadCertificate(const QString &filename);
 
 private:
   // SSL
@@ -81,9 +80,9 @@ private:
   void disconnect();
   bool verifyCertFingerprint(const QString &FingerprintDatabasePath) const;
 
-  ISocketMultiplexerJob *serviceConnect(ISocketMultiplexerJob *, bool, bool, bool);
+  ISocketMultiplexerJob *serviceConnect(ISocketMultiplexerJob *const socket, bool, bool, bool);
 
-  ISocketMultiplexerJob *serviceAccept(ISocketMultiplexerJob *, bool, bool, bool);
+  ISocketMultiplexerJob *serviceAccept(ISocketMultiplexerJob *const socket, bool, bool, bool);
 
   void handleTCPConnected(const Event &event);
 

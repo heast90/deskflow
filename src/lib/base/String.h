@@ -8,8 +8,6 @@
 
 #pragma once
 
-#include "common/Common.h"
-
 #include <string>
 
 //! std::string utilities
@@ -41,18 +39,6 @@ std::string vformat(const char *fmt, va_list);
 Equivalent to sprintf() except the result is returned as a String.
 */
 std::string sprintf(const char *fmt, ...);
-
-//! Convert a size type to a string
-/*!
-Convert an size type to a string
-*/
-std::string sizeTypeToString(size_t n);
-
-//! Convert a string to a size type
-/*!
-Convert an a \c string to an size type
-*/
-size_t stringToSizeType(const std::string &string);
 
 //! Case-insensitive comparisons
 /*!

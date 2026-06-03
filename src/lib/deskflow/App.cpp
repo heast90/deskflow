@@ -8,31 +8,28 @@
 #include "deskflow/App.h"
 
 #include "DisplayInvalidException.h"
-#include "VersionInfo.h"
 #include "arch/Arch.h"
 #include "base/Log.h"
 #include "base/LogOutputters.h"
-#include "common/Constants.h"
-#include "deskflow/ArgsBase.h"
-#include "deskflow/Config.h"
-#include "deskflow/ProtocolTypes.h"
-#include "deskflow/XDeskflow.h"
+#include "common/ExitCodes.h"
+#include "common/PlatformInfo.h"
+#include "common/Settings.h"
+#include "deskflow/DeskflowException.h"
 
 #if SYSAPI_WIN32
 #include "base/IEventQueue.h"
 #endif
 
-#include <iostream>
 #include <stdexcept>
-#include <stdio.h>
-#include <vector>
 
 #if WINAPI_CARBON
 #include "platform/OSXCocoaApp.h"
 #include <ApplicationServices/ApplicationServices.h>
 #endif
 
-#include <CLI/CLI.hpp>
+#if defined(WINAPI_XWINDOWS) or defined(WINAPI_LIBEI)
+#include "platform/XDGPortalRegistry.h"
+#endif
 
 using namespace deskflow;
 
@@ -42,35 +39,25 @@ App *App::s_instance = nullptr;
 // App
 //
 
-App::App(IEventQueue *events, deskflow::ArgsBase *args)
+App::App(IEventQueue *events, const QString &processName)
     : m_bye(&exit),
       m_events(events),
-      m_args(args),
-      m_appUtil(events)
+      m_appUtil(events),
+      m_pname(processName)
 {
   assert(s_instance == nullptr);
   s_instance = this;
+#if defined(WINAPI_XWINDOWS) or defined(WINAPI_LIBEI)
+  deskflow::platform::setAppId();
+#endif
 }
 
 App::~App()
 {
   s_instance = nullptr;
-  delete m_args;
 }
 
-void App::version()
-{
-  const auto kBufferLength = 1024;
-  std::vector<char> buffer(kBufferLength);
-  std::snprintf(                                                   // NOSONAR
-      buffer.data(), kBufferLength, "%s v%s, protocol v%d.%d\n%s", //
-      argsBase().m_pname, kVersion, kProtocolMajorVersion, kProtocolMinorVersion, kCopyright
-  );
-
-  std::cout << std::string(buffer.data()) << std::endl;
-}
-
-int App::run(int argc, char **argv)
+int App::run()
 {
 #if MAC_OS_X_VERSION_10_7
   // dock hide only supported on lion :(
@@ -91,88 +78,59 @@ int App::run(int argc, char **argv)
   int result = s_exitFailed;
 
   try {
-    result = appUtil().run(argc, argv);
-  } catch (XExitApp &e) {
+    result = appUtil().run();
+  } catch (ExitAppException &e) {
     // instead of showing a nasty error, just exit with the error code.
     // not sure if i like this behaviour, but it's probably better than
     // using the exit(int) function!
     result = e.getCode();
   } catch (DisplayInvalidException &die) {
-    LOG((CLOG_CRIT "a display invalid exception error occurred: %s\n", die.what()));
+    LOG_CRIT("a display invalid exception error occurred: %s\n", die.what());
     // display invalid exceptions can occur when going to sleep. When this
     // process exits, the UI will restart us instantly. We don't really want
     // that behevior, so we quies for a bit
     Arch::sleep(10);
   } catch (std::runtime_error &re) {
-    LOG((CLOG_CRIT "a runtime error occurred: %s\n", re.what()));
+    LOG_CRIT("a runtime error occurred: %s\n", re.what());
   } catch (std::exception &e) {
-    LOG((CLOG_CRIT "an error occurred: %s\n", e.what()));
+    LOG_CRIT("an error occurred: %s\n", e.what());
   } catch (...) {
-    LOG((CLOG_CRIT "an unknown error occurred\n"));
+    LOG_CRIT("an unknown error occurred\n");
   }
 
   return result;
 }
 
-int App::daemonMainLoop(int, const char **)
-{
-#if SYSAPI_WIN32
-  SystemLogger sysLogger(daemonName(), false);
-#else
-  SystemLogger sysLogger(daemonName(), true);
-#endif
-  return mainLoop();
-}
-
 void App::setupFileLogging()
 {
-  if (argsBase().m_logFile != nullptr) {
-    m_fileLog = new FileLogOutputter(argsBase().m_logFile); // NOSONAR - Adopted by `Log`
+  if (Settings::value(Settings::Log::ToFile).toBool()) {
+    const auto file = Settings::value(Settings::Log::File).toString();
+    m_fileLog = new FileLogOutputter(file); // NOSONAR - Adopted by `Log`
     CLOG->insert(m_fileLog);
-    LOG((CLOG_DEBUG1 "logging to file (%s) enabled", argsBase().m_logFile));
+    LOG_DEBUG1("logging to file (%s) enabled", qPrintable(file));
   }
 }
 
 void App::loggingFilterWarning() const
 {
-  if ((CLOG->getFilter() > CLOG->getConsoleMaxLevel()) && (argsBase().m_logFile == nullptr)) {
-    LOG(
-        (CLOG_WARN "log messages above %s are NOT sent to console (use file logging)",
-         CLOG->getFilterName(CLOG->getConsoleMaxLevel()))
+  if ((CLOG->getFilter() > CLOG->getConsoleMaxLevel()) && (Settings::value(Settings::Log::ToFile).toBool())) {
+    LOG_WARN(
+        "log messages above %s are NOT sent to console (use file logging)",
+        CLOG->getFilterName(CLOG->getConsoleMaxLevel())
     );
   }
 }
 
-void App::initApp(int argc, const char **argv)
+void App::initApp()
 {
-  std::string configFilename;
-  CLI::App cliApp{kAppDescription};
-  cliApp.add_option("--config-toml", configFilename, "Use TOML configuration file");
-
-  // Allow legacy args.
-  cliApp.allow_extras();
-
-  // Having the help argument crashes without try / catch around it
-  try {
-    cliApp.parse(argc, argv);
-  } catch (const CLI::Error &e) {
-    cliApp.exit(e);
-  }
-
-  if (!configFilename.empty()) {
-    Config config(configFilename, configSection());
-    if (config.load(argv[0])) {
-      parseArgs(config.argc(), config.argv());
-    }
-  } else {
-    parseArgs(argc, argv);
-  }
+  parseArgs();
 
   // set log filter
-  if (!CLOG->setFilter(argsBase().m_logFilter)) {
-    LOG((
-        CLOG_CRIT "%s: unrecognized log level `%s'" BYE, argsBase().m_pname, argsBase().m_logFilter, argsBase().m_pname
-    ));
+  if (const auto logLevel = Settings::logLevelText(); !CLOG->setFilter(logLevel)) {
+    LOG_CRIT(
+        "%s: unrecognized log level `%s'" BYE, qPrintable(processName()), qPrintable(logLevel),
+        qPrintable(processName())
+    );
     m_bye(s_exitArgs);
   }
   loggingFilterWarning();
@@ -184,7 +142,13 @@ void App::initApp(int argc, const char **argv)
   loadConfig();
 }
 
-void App::runEventsLoop(void *)
+void App::handleScreenError() const
+{
+  LOG_CRIT("error on screen");
+  getEvents()->addEvent(Event(EventTypes::Quit));
+}
+
+void App::runEventsLoop(const void *)
 {
   m_events->loop();
 

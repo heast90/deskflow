@@ -1,21 +1,22 @@
-# SPDX-FileCopyrightText: 2024 Chris Rizzitello <sithlord48@gmail.com>
-# SPDX-FileCopyrightText: 2012 - 2024 Symless Ltd
-# SPDX-FileCopyrightText: 2009 - 2012 Nick Bolton
+# SPDX-FileCopyrightText: (C) 2024 Chris Rizzitello <sithlord48@gmail.com>
+# SPDX-FileCopyrightText: (C) 2012 - 2024 Symless Ltd
+# SPDX-FileCopyrightText: (C) 2009 - 2012 Nick Bolton
 # SPDX-License-Identifier: MIT
 
 add_library(base STATIC
+  BaseException.cpp
+  BaseException.h
   DirectionTypes.h
-  Event.cpp
   Event.h
   EventQueue.cpp
   EventQueue.h
+  EventQueueTimer.h
   EventTypes.h
   FinalAction.h
   FunctionEventJob.cpp
   FunctionEventJob.h
   FunctionJob.cpp
   FunctionJob.h
-  IEventJob.h
   IEventQueue.h
   IEventQueueBuffer.h
   IJob.h
@@ -25,8 +26,7 @@ add_library(base STATIC
   Log.cpp
   Log.h
   LogLevel.h
-  Path.cpp
-  Path.h
+  NetworkProtocol.h
   PriorityQueue.h
   SimpleEventQueueBuffer.cpp
   SimpleEventQueueBuffer.h
@@ -37,8 +37,9 @@ add_library(base STATIC
   TMethodJob.h
   Unicode.cpp
   Unicode.h
-  XBase.cpp
-  XBase.h
 )
 
-target_link_libraries(base PRIVATE arch)
+target_link_libraries(base PUBLIC arch)
+if (CMAKE_CXX_BYTE_ORDER STREQUAL "BIG_ENDIAN")
+  target_compile_definitions(base PUBLIC WORDS_BIGENDIAN=1)
+endif()

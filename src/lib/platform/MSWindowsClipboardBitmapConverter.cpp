@@ -13,9 +13,9 @@
 // MSWindowsClipboardBitmapConverter
 //
 
-IClipboard::EFormat MSWindowsClipboardBitmapConverter::getFormat() const
+IClipboard::Format MSWindowsClipboardBitmapConverter::getFormat() const
 {
-  return IClipboard::kBitmap;
+  return IClipboard::Format::Bitmap;
 }
 
 UINT MSWindowsClipboardBitmapConverter::getWin32Format() const
@@ -67,8 +67,7 @@ std::string MSWindowsClipboardBitmapConverter::toIClipboard(HANDLE data) const
   }
 
   // create a destination DIB section
-  LOG((CLOG_INFO "convert image from: depth=%d comp=%d", bitmap->bmiHeader.biBitCount, bitmap->bmiHeader.biCompression)
-  );
+  LOG_INFO("convert image from: depth=%d comp=%d", bitmap->bmiHeader.biBitCount, bitmap->bmiHeader.biCompression);
   void *raw;
   BITMAPINFOHEADER info;
   LONG w = bitmap->bmiHeader.biWidth;

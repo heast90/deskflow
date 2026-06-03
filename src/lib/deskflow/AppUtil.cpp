@@ -7,7 +7,7 @@
 
 #include "deskflow/AppUtil.h"
 
-#include "algorithm"
+#include <assert.h>
 
 AppUtil *AppUtil::s_instance = nullptr;
 

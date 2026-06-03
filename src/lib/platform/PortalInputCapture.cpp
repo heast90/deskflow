@@ -73,7 +73,7 @@ void PortalInputCapture::handleSessionClosed(XdpSession *session)
 {
   LOG_ERR("portal input capture session was closed, exiting");
   g_main_loop_quit(m_glibMainLoop);
-  m_events->addEvent(EventTypes::Quit);
+  m_events->addEvent(Event(EventTypes::Quit));
 
   g_signal_handler_disconnect(session, m_signals.at(Signal::SessionClosed));
   m_signals.at(Signal::SessionClosed) = 0;
@@ -88,7 +88,7 @@ void PortalInputCapture::handleInitSession(GObject *object, GAsyncResult *res)
   if (!session) {
     LOG_ERR("failed to initialize input capture session, quitting: %s", error->message);
     g_main_loop_quit(m_glibMainLoop);
-    m_events->addEvent(EventTypes::Quit);
+    m_events->addEvent(Event(EventTypes::Quit));
     return;
   }
 
@@ -98,7 +98,7 @@ void PortalInputCapture::handleInitSession(GObject *object, GAsyncResult *res)
   if (fd < 0) {
     LOG_ERR("failed to connect to eis: %s", error->message);
     g_main_loop_quit(m_glibMainLoop);
-    m_events->addEvent(EventTypes::Quit);
+    m_events->addEvent(Event(EventTypes::Quit));
     return;
   }
 
@@ -334,17 +334,21 @@ void PortalInputCapture::handleZonesChanged(XdpInputCaptureSession *session, con
     list = g_list_append(list, b);
   }
 
-  xdp_input_capture_session_set_pointer_barriers(
-      m_session, list,
-      nullptr, // cancellable
-      [](GObject *obj, GAsyncResult *res, gpointer data) {
-        static_cast<PortalInputCapture *>(data)->handleSetPointerBarriers(obj, res);
-      },
-      this
-  );
+  if (list != nullptr) {
+    xdp_input_capture_session_set_pointer_barriers(
+        m_session, list,
+        nullptr, // cancellable
+        [](GObject *obj, GAsyncResult *res, gpointer data) {
+          static_cast<PortalInputCapture *>(data)->handleSetPointerBarriers(obj, res);
+        },
+        this
+    );
+  } else {
+    LOG_WARN("no input capture pointer barriers found");
+  }
 }
 
-void PortalInputCapture::glibThread(void *)
+void PortalInputCapture::glibThread(const void *)
 {
   auto context = g_main_loop_get_context(m_glibMainLoop);
 

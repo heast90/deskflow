@@ -1,11 +1,17 @@
-# SPDX-FileCopyrightText: 2024 - 2025 Chris Rizzitello <sithlord48@gmail.com>
-# SPDX-FileCopyrightText: 2012 - 2024 Symless Ltd
-# SPDX-FileCopyrightText: 2009 - 2012 Nick Bolton
+# SPDX-FileCopyrightText: (C) 2024 - 2025 Chris Rizzitello <sithlord48@gmail.com>
+# SPDX-FileCopyrightText: (C) 2012 - 2024 Symless Ltd
+# SPDX-FileCopyrightText: (C) 2009 - 2012 Nick Bolton
 # SPDX-License-Identifier: MIT
 
 set(target ${CMAKE_PROJECT_NAME}-core)
 
-add_executable(${target} "${target}.cpp")
+add_executable(${target}
+  "${target}.cpp"
+  CoreArgs.h
+  CoreArgParser.h
+  CoreArgParser.cpp
+)
+
 if(WIN32)
   # Generate rc file
   set(EXE_DESCRIPTION "${CMAKE_PROJECT_PROPER_NAME} combined server and client application")
@@ -32,28 +38,24 @@ target_link_libraries(
   app
   ${libs})
 
-if(APPLE)
+install(
+  TARGETS ${target}
+  RUNTIME_DEPENDENCY_SET coreDeps
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+if(BUILD_OSX_BUNDLE)
   set_target_properties(${target} PROPERTIES
     BUILD_WITH_INSTALL_RPATH TRUE
     INSTALL_RPATH "@loader_path/../Libraries;@loader_path/../Frameworks"
     RUNTIME_OUTPUT_DIRECTORY $<TARGET_BUNDLE_CONTENT_DIR:${CMAKE_PROJECT_PROPER_NAME}>/MacOS
   )
-elseif(UNIX)
-  install(TARGETS ${target} DESTINATION bin)
-  generate_app_man(${target} "${CMAKE_PROJECT_DESCRIPTION}")
-elseif(WIN32)
-  install(
-    TARGETS ${target}
-    RUNTIME_DEPENDENCY_SET coreDeps
-    DESTINATION .
-  )
+elseif (WIN32)
   install(RUNTIME_DEPENDENCY_SET coreDeps
-    PRE_EXCLUDE_REGEXES
-      "api-ms-win-.*"
-      "ext-ms-.*"
-      "^hvsifiletrust\\.dll$"
-    POST_EXCLUDE_REGEXES
-      ".*system32.*"
-    RUNTIME DESTINATION .
+    PRE_EXCLUDE_REGEXES ${WIN32_PRE_EXCLUDE_REGEXES}
+    POST_EXCLUDE_REGEXES ${WIN32_POST_EXCLUDE_REGEXES}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}
   )
+else()
+  generate_app_man(${target} "${CMAKE_PROJECT_DESCRIPTION}")
 endif()

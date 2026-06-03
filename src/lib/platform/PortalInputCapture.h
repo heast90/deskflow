@@ -14,7 +14,6 @@
 #include <glib.h>
 #include <libportal/inputcapture.h>
 #include <libportal/portal.h>
-#include <memory>
 
 namespace deskflow {
 
@@ -27,13 +26,13 @@ public:
   void disable();
   void release();
   void release(double x, double y);
-  bool is_active() const
+  bool isActive() const
   {
     return m_isActive;
   }
 
 private:
-  void glibThread(void *);
+  void glibThread(const void *);
   gboolean timeoutHandler() const;
   gboolean initSession();
   void handleInitSession(GObject *object, GAsyncResult *res);

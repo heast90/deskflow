@@ -1,17 +1,9 @@
-# SPDX-FileCopyrightText: 2025 Deskflow Developers
+# SPDX-FileCopyrightText: (C) 2025 Deskflow Developers
 # SPDX-License-Identifier: MIT
 
 if(WIN32)
   set(extra_libs version)
 endif()
-
-create_test(
-  NAME ArgParserTests
-  DEPENDS app
-  LIBS arch base ${extra_libs}
-  SOURCE ArgParserTests.cpp
-  WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/deskflow"
-)
 
 create_test(
   NAME ClipboardTests
@@ -26,14 +18,6 @@ create_test(
   DEPENDS app
   LIBS arch base io ${extra_libs}
   SOURCE ClipboardChunksTests.cpp
-  WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/deskflow"
-)
-
-create_test(
-  NAME ConfigTests
-  DEPENDS app
-  LIBS arch base ${extra_libs}
-  SOURCE ConfigTests.cpp
   WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/deskflow"
 )
 
@@ -61,17 +45,7 @@ create_test(
   WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/deskflow"
 )
 
-
-if(UNIX AND NOT APPLE)
-  #this test does not work properly on windows / mac os
-  create_test(
-    NAME ServerAppTests
-    DEPENDS app
-    LIBS arch base
-    SOURCE ServerAppTests.cpp
-    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/deskflow"
-  )
-
+if(BUILD_X11_SUPPORT)
   create_test(
     NAME X11LayoutParserTests
     DEPENDS app

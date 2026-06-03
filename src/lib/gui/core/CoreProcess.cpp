@@ -1,70 +1,38 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2025 - 2026 Chris Rizzitello <sithlord48@gmail.com>
  * SPDX-FileCopyrightText: (C) 2024 - 2025 Symless Ltd.
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
  */
 
 #include "CoreProcess.h"
 
-#include "common/Settings.h"
+#include "common/ExitCodes.h"
 #include "gui/ipc/DaemonIpcClient.h"
-#include "tls/TlsUtility.h"
 
-#if defined(Q_OS_MAC)
+#if defined(Q_OS_MACOS)
 #include "OSXHelpers.h"
 #endif
 
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>
-#include <QMessageBox>
 #include <QMutexLocker>
 #include <QRegularExpression>
-#include <QStandardPaths>
-#include <QTimer>
 
 namespace deskflow::gui {
 
 const int kRetryDelay = 1000;
-const auto kServerConfigFilename = QStringLiteral("%1-server.conf").arg(kAppId);
 const auto kLineSplitRegex = QRegularExpression("\r|\n|\r\n");
 
-//
-// free functions
-//
-
-QString processModeToString(Settings::ProcessMode mode)
+QString CoreProcess::processModeToString(const Settings::ProcessMode mode)
 {
-  switch (mode) {
-  case Settings::ProcessMode::Desktop:
-    return "desktop";
-  case Settings::ProcessMode::Service:
-    return "service";
-  default:
-    qFatal("invalid process mode");
-    abort();
-  }
+  return QVariant::fromValue(mode).toString().toLower();
 }
 
-QString processStateToString(CoreProcess::ProcessState state)
+QString CoreProcess::processStateToString(const CoreProcess::ProcessState state)
 {
-  using enum CoreProcess::ProcessState;
-
-  switch (state) {
-  case Starting:
-    return "starting";
-  case Started:
-    return "started";
-  case Stopping:
-    return "stopping";
-  case Stopped:
-    return "stopped";
-  case RetryPending:
-    return "retry pending";
-  default:
-    qFatal("invalid process state");
-    abort();
-  }
+  return QVariant::fromValue(state).toString().toLower();
 }
 
 /**
@@ -75,83 +43,68 @@ QString processStateToString(CoreProcess::ProcessState state)
  * Can also be used to create a representation of a command that can be pasted
  * into a terminal.
  */
-QString makeQuotedArgs(const QString &app, const QStringList &args)
+QString CoreProcess::makeQuotedArgs(const QString &app, const QStringList &args)
 {
-  QStringList command;
-  command << app;
-  command << args;
+  QStringList command = {app};
+  command.append(args);
 
+  static const auto quote = QStringLiteral("\"");
+  static const auto space = QStringLiteral(" ");
   QStringList quoted;
-  for (const auto &arg : std::as_const(command)) {
-    if (arg.contains(' ')) {
-      quoted << QString("\"%1\"").arg(arg);
-    } else {
-      quoted << arg;
+  for (const auto &item : std::as_const(command)) {
+    auto temp = item.simplified();
+    if (const auto wrapped = (temp.startsWith(quote) && temp.endsWith(quote)); temp.contains(space) && !wrapped) {
+      temp = QStringLiteral("%1%2%1").arg(quote, temp);
     }
+    quoted.append(temp);
   }
 
-  return quoted.join(" ");
+  return quoted.join(space);
 }
 
 /**
  * @brief If IPv6, ensures the IP is surround in square brackets.
  */
-QString wrapIpv6(const QString &address)
+QString CoreProcess::wrapIpv6(const QString &address)
 {
-  if (!address.contains(':') || address.isEmpty()) {
+  static const auto colon = QStringLiteral(":");
+  static const auto openBracket = QStringLiteral("[");
+  static const auto closeBracket = QStringLiteral("]");
+
+  if (!address.contains(colon) || address.isEmpty()) {
     return address;
   }
 
   QString wrapped = address;
 
-  if (address[0] != '[') {
-    wrapped.insert(0, '[');
+  if (!address.startsWith(openBracket)) {
+    wrapped.prepend(openBracket);
   }
 
-  if (address[address.size() - 1] != ']') {
-    wrapped.push_back(']');
+  if (!address.endsWith(closeBracket)) {
+    wrapped.append(closeBracket);
   }
 
-  return address;
-}
-
-//
-// CoreProcess::Deps
-//
-
-QString CoreProcess::Deps::appPath(const QString &name) const
-{
-  QDir dir(QCoreApplication::applicationDirPath());
-  return dir.filePath(name);
-}
-
-bool CoreProcess::Deps::fileExists(const QString &path) const
-{
-  return QFile::exists(path);
+  return wrapped;
 }
 
 //
 // CoreProcess
 //
 
-CoreProcess::CoreProcess(const IServerConfig &serverConfig, std::shared_ptr<Deps> deps)
+CoreProcess::CoreProcess(const IServerConfig &serverConfig)
     : m_serverConfig(serverConfig),
-      m_pDeps(deps),
       m_daemonIpcClient{new ipc::DaemonIpcClient(this)}
 {
+  m_appPath = QStringLiteral("%1/%2").arg(QCoreApplication::applicationDirPath(), kCoreBinName);
+  if (!QFile::exists(m_appPath)) {
+    qFatal("core server binary does not exist");
+    return;
+  }
+
   connect(m_daemonIpcClient, &ipc::DaemonIpcClient::connected, this, &CoreProcess::daemonIpcClientConnected);
   connect(
       m_daemonIpcClient, &ipc::DaemonIpcClient::connectionFailed, this, &CoreProcess::daemonIpcClientConnectionFailed
-  );
-
-  connect(&m_pDeps->process(), &QProcessProxy::finished, this, &CoreProcess::onProcessFinished);
-
-  connect(
-      &m_pDeps->process(), &QProcessProxy::readyReadStandardOutput, this, &CoreProcess::onProcessReadyReadStandardOutput
-  );
-
-  connect(
-      &m_pDeps->process(), &QProcessProxy::readyReadStandardError, this, &CoreProcess::onProcessReadyReadStandardError
   );
 
   connect(&m_retryTimer, &QTimer::timeout, this, [this] {
@@ -165,15 +118,15 @@ CoreProcess::CoreProcess(const IServerConfig &serverConfig, std::shared_ptr<Deps
 
 void CoreProcess::onProcessReadyReadStandardOutput()
 {
-  if (m_pDeps->process()) {
-    handleLogLines(m_pDeps->process().readAllStandardOutput());
+  if (m_process) {
+    handleLogLines(m_process->readAllStandardOutput());
   }
 }
 
 void CoreProcess::onProcessReadyReadStandardError()
 {
-  if (m_pDeps->process()) {
-    handleLogLines(m_pDeps->process().readAllStandardError());
+  if (m_process) {
+    handleLogLines(m_process->readAllStandardError());
   }
 }
 
@@ -182,13 +135,15 @@ void CoreProcess::daemonIpcClientConnected()
   applyLogLevel();
 
   const auto logPath = requestDaemonLogPath();
-  if (!logPath.isEmpty()) {
-    if (m_daemonFileTail != nullptr) {
-      disconnect(m_daemonFileTail, &FileTail::newLine, this, &CoreProcess::handleLogLines);
-      m_daemonFileTail->deleteLater();
-    }
+  if (logPath.isEmpty()) {
+    qWarning() << "daemon no log path";
+    return;
+  }
 
-    qDebug() << "daemon log path:" << logPath;
+  qDebug() << "daemon log path:" << logPath;
+  if (m_daemonFileTail) {
+    m_daemonFileTail->setWatchedFile(logPath);
+  } else {
     m_daemonFileTail = new FileTail(logPath, this);
     connect(m_daemonFileTail, &FileTail::newLine, this, &CoreProcess::handleLogLines);
   }
@@ -196,28 +151,31 @@ void CoreProcess::daemonIpcClientConnected()
 
 void CoreProcess::onProcessFinished(int exitCode, QProcess::ExitStatus)
 {
-  const auto wasStarted = m_processState == ProcessState::Started;
-
+  using enum ProcessState;
   setConnectionState(ConnectionState::Disconnected);
 
-  if (exitCode == 0) {
-    qDebug("desktop process exited normally");
-  } else {
-    qWarning("desktop process exited with error code: %d", exitCode);
+  if (m_retryTimer.isActive()) {
+    m_retryTimer.stop();
   }
 
-  if (wasStarted) {
+  if (exitCode != s_exitSuccess) {
+    setProcessState(Stopped);
+    if (exitCode == s_exitDuplicate)
+      qWarning("desktop process is already running");
+    else
+      qWarning("desktop process exited with code: %d", exitCode);
+    return;
+  }
+
+  qDebug("desktop process exited normally");
+
+  if (const auto wasStarted = m_processState == Started; wasStarted) {
     qDebug("desktop process was running, retrying in %d ms", kRetryDelay);
-
-    if (m_retryTimer.isActive()) {
-      m_retryTimer.stop();
-    }
-
-    setProcessState(ProcessState::RetryPending);
+    setProcessState(RetryPending);
     m_retryTimer.setSingleShot(true);
     m_retryTimer.start(kRetryDelay);
   } else {
-    setProcessState(ProcessState::Stopped);
+    setProcessState(Stopped);
   }
 }
 
@@ -232,7 +190,7 @@ void CoreProcess::applyLogLevel()
   }
 }
 
-void CoreProcess::startForegroundProcess(const QString &app, const QStringList &args)
+void CoreProcess::startForegroundProcess(const QStringList &args)
 {
   using enum ProcessState;
 
@@ -242,12 +200,12 @@ void CoreProcess::startForegroundProcess(const QString &app, const QStringList &
 
   // only make quoted args for printing the command for convenience; so that the
   // core command can be easily copy/pasted to the terminal for testing.
-  const auto quoted = makeQuotedArgs(app, args);
+  const auto quoted = makeQuotedArgs(m_appPath, args);
   qInfo("running command: %s", qPrintable(quoted));
 
-  m_pDeps->process().start(app, args);
+  m_process->start(m_appPath, args);
 
-  if (m_pDeps->process().waitForStarted()) {
+  if (m_process->waitForStarted()) {
     setProcessState(Started);
   } else {
     setProcessState(Stopped);
@@ -255,13 +213,13 @@ void CoreProcess::startForegroundProcess(const QString &app, const QStringList &
   }
 }
 
-void CoreProcess::startProcessFromDaemon(const QString &app, const QStringList &args)
+void CoreProcess::startProcessFromDaemon(const QStringList &args)
 {
   if (m_processState != ProcessState::Starting) {
     qFatal("core process must be in starting state");
   }
 
-  QString commandQuoted = makeQuotedArgs(app, args);
+  QString commandQuoted = makeQuotedArgs(m_appPath, args);
 
   qInfo("running command: %s", qPrintable(commandQuoted));
 
@@ -279,15 +237,15 @@ void CoreProcess::stopForegroundProcess() const
     qFatal("core process must be in stopping state");
   }
 
-  if (!m_pDeps->process()) {
+  if (!m_process) {
     qFatal("process not set, cannot stop");
   }
 
   qInfo("stopping core desktop process");
 
-  if (m_pDeps->process().state() == QProcess::ProcessState::Running) {
+  if (m_process->state() == QProcess::ProcessState::Running) {
     qDebug("process is running, closing");
-    m_pDeps->process().close();
+    m_process->close();
   } else {
     qDebug("process is not running, skipping terminate");
   }
@@ -315,7 +273,7 @@ void CoreProcess::handleLogLines(const QString &text)
       continue;
     }
 
-#if defined(Q_OS_MAC)
+#if defined(Q_OS_MACOS)
     // HACK: macOS 10.13.4+ spamming error lines in logs making them
     // impossible to read and debug; giving users a red herring.
     if (line.contains("calling TIS/TSM in non-main thread environment")) {
@@ -330,58 +288,69 @@ void CoreProcess::handleLogLines(const QString &text)
 
 void CoreProcess::start(std::optional<ProcessMode> processModeOption)
 {
-  QMutexLocker locker(&m_processMutex);
-
-  const auto currentMode = Settings::value(Settings::Core::ProcessMode).value<ProcessMode>();
-  const auto processMode = processModeOption.value_or(currentMode);
-
-  qInfo().noquote(
-  ) << QString("starting core %1 process (%2 mode)").arg(modeString(), processModeToString(processMode));
-
   if (m_processState == ProcessState::Started) {
     qCritical("core process already started");
     return;
   }
 
-  // allow external listeners to abort the start process (e.g. licensing issue).
-  setProcessState(ProcessState::Starting);
-  Q_EMIT starting();
-  if (m_processState == ProcessState::Stopped) {
-    qDebug("core process start was cancelled by listener");
+  if (m_mode == Settings::CoreMode::None) {
+    qFatal("set core mode before starting");
     return;
   }
 
-#ifdef Q_OS_MAC
+  QMutexLocker locker(&m_processMutex);
+
+  const auto currentMode = Settings::value(Settings::Core::ProcessMode).value<ProcessMode>();
+  const auto processMode = processModeOption.value_or(currentMode);
+  const auto coreMode = QVariant::fromValue(m_mode).toString().toLower();
+
+  qInfo().noquote() << QString("starting %1 process (%2 mode)").arg(coreMode, processModeToString(processMode));
+
+  setProcessState(ProcessState::Starting);
+
+#ifdef Q_OS_MACOS
   requestOSXNotificationPermission();
 #endif
 
   setConnectionState(ConnectionState::Connecting);
 
   if (processMode == ProcessMode::Desktop) {
-    m_pDeps->process().create();
+    m_process = new QProcess(this);
+    connect(m_process, &QProcess::finished, this, &CoreProcess::onProcessFinished, Qt::UniqueConnection);
+    connect(
+        m_process, &QProcess::readyReadStandardOutput, this, &CoreProcess::onProcessReadyReadStandardOutput,
+        Qt::UniqueConnection
+    );
+    connect(
+        m_process, &QProcess::readyReadStandardError, this, &CoreProcess::onProcessReadyReadStandardError,
+        Qt::UniqueConnection
+    );
   }
 
-  QString app;
-  QStringList args;
-  addGenericArgs(args, processMode);
+  QStringList args = {coreMode};
 
-  if (mode() == Settings::CoreMode::Server && !addServerArgs(args, app)) {
-    qWarning("failed to add server args for core process, aborting start");
-    return;
-  } else if (mode() == Settings::CoreMode::Client && !addClientArgs(args, app)) {
-    qWarning("failed to add client args for core process, aborting start");
-    return;
+  if (m_mode == Settings::CoreMode::Server) {
+    const auto configFilename = persistServerConfig();
+    if (configFilename.isEmpty()) {
+      qFatal("config file name empty for server args");
+      return;
+    }
+    qInfo("core config file: %s", qPrintable(configFilename));
   }
 
   qDebug().noquote() << "log level:" << Settings::logLevelText();
 
-  if (Settings::value(Settings::Log::ToFile).toBool())
-    qInfo().noquote() << "log file:" << Settings::value(Settings::Log::File).toString();
+  if (Settings::value(Settings::Log::ToFile).toBool()) {
+    const auto logFile = Settings::value(Settings::Log::File).toString();
+    QDir(QFileInfo(logFile).absolutePath()).mkpath(".");
+    qInfo().noquote() << "log file:" << logFile;
+  }
 
   if (processMode == ProcessMode::Desktop) {
-    startForegroundProcess(app, args);
+    startForegroundProcess(args);
   } else if (processMode == ProcessMode::Service) {
-    startProcessFromDaemon(app, args);
+    args.append({QStringLiteral("--settings"), Settings::settingsFile()});
+    startProcessFromDaemon(args);
   }
 
   m_lastProcessMode = processMode;
@@ -421,16 +390,12 @@ void CoreProcess::restart()
 
   const auto processMode = Settings::value(Settings::Core::ProcessMode).value<ProcessMode>();
 
-  if (m_lastProcessMode != processMode) {
-    if (processMode == ProcessMode::Desktop) {
-      qDebug("process mode changed to desktop, stopping service process");
-      stop(ProcessMode::Service);
-    } else if (processMode == ProcessMode::Service) {
-      qDebug("process mode changed to service, stopping desktop process");
-      stop(ProcessMode::Desktop);
-    } else {
-      qFatal("invalid process mode");
-    }
+  if (m_lastProcessMode != std::nullopt && m_lastProcessMode != processMode) {
+    const auto debugMessage =
+        QStringLiteral("process mode changed to %1, stopping %2 process")
+            .arg(processModeToString(processMode), processModeToString(m_lastProcessMode.value()));
+    qDebug().noquote() << debugMessage;
+    stop(m_lastProcessMode);
   } else {
     // in service mode: though there is technically no need to stop the service
     // before restarting it, it does make for cleaner process state tracking,
@@ -452,110 +417,13 @@ void CoreProcess::cleanup()
   }
 }
 
-bool CoreProcess::addGenericArgs(QStringList &args, const ProcessMode processMode) const
-{
-  args << "-f"
-       << "--debug" << Settings::logLevelText();
-
-  args << "--name" << Settings::value(Settings::Core::ScreenName).toString();
-
-  if (Settings::value(Settings::Security::TlsEnabled).toBool()) {
-    args << "--enable-crypto";
-  }
-
-  if (Settings::value(Settings::Core::PreventSleep).toBool()) {
-    args << "--prevent-sleep";
-  }
-
-  return true;
-}
-
-bool CoreProcess::addServerArgs(QStringList &args, QString &app)
-{
-  app = m_pDeps->appPath(Settings::value(Settings::Server::Binary).toString());
-
-  if (!m_pDeps->fileExists(app)) {
-    qFatal("core server binary does not exist");
-    return false;
-  }
-
-  if (Settings::value(Settings::Log::ToFile).toBool()) {
-    persistLogDir();
-    args << "--log" << Settings::value(Settings::Log::File).toString();
-  }
-
-  if (!Settings::value(Settings::Security::CheckPeers).toBool()) {
-    args << "--disable-client-cert-check";
-  }
-
-  QString configFilename = persistServerConfig();
-  if (configFilename.isEmpty()) {
-    qFatal("config file name empty for server args");
-    return false;
-  }
-
-  // the address arg is dual purpose; when in listening mode, it's the address
-  // that the server listens on. when tcp sockets are inverted, it connects to
-  // that address. this is a bit confusing, and there should be probably be
-  // different args for different purposes.
-  args << "--address" << correctedInterface();
-
-  args << "-c" << configFilename;
-  qInfo("core config file: %s", qPrintable(configFilename));
-  // bizarrely, the tls cert path arg was being given to the core client.
-  // since it's not clear why (it is only needed for the server), this has now
-  // been moved to server args.
-  if (Settings::value(Settings::Security::TlsEnabled).toBool()) {
-    if (TlsUtility tlsUtility(this); !tlsUtility.persistCertificate()) {
-      qCritical("failed to persist tls certificate");
-      return false;
-    }
-    args << "--tls-cert" << Settings::value(Settings::Security::Certificate).toString();
-  }
-
-  return true;
-}
-
-bool CoreProcess::addClientArgs(QStringList &args, QString &app)
-{
-  app = m_pDeps->appPath(Settings::value(Settings::Client::Binary).toString());
-
-  if (!m_pDeps->fileExists(app)) {
-    qFatal("core client binary does not exist");
-    return false;
-  }
-
-  if (Settings::value(Settings::Log::ToFile).toBool()) {
-    persistLogDir();
-    args << "--log" << Settings::value(Settings::Log::File).toString();
-  }
-
-  if (Settings::value(Settings::Client::LanguageSync).toBool()) {
-    args << "--sync-language";
-  }
-
-  if (Settings::value(Settings::Client::InvertScrollDirection).toBool()) {
-    args << "--invert-scroll";
-  }
-
-  if (correctedAddress().isEmpty()) {
-    Q_EMIT error(Error::AddressMissing);
-    qDebug("address is missing for client args");
-    return false;
-  }
-
-  args << correctedAddress() + ":" + Settings::value(Settings::Core::Port).toString();
-
-  return true;
-}
-
 QString CoreProcess::persistServerConfig() const
 {
   if (Settings::value(Settings::Server::ExternalConfig).toBool()) {
     return Settings::value(Settings::Server::ExternalConfigFile).toString();
   }
 
-  const auto configFilePath = QStringLiteral("%1/%2").arg(Settings::settingsPath(), kServerConfigFilename);
+  const auto configFilePath = Settings::defaultValue(Settings::Server::ExternalConfigFile).toString();
   QFile configFile(configFilePath);
   if (!configFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
     qFatal("failed to open core config file for write: %s", qPrintable(configFile.fileName()));
@@ -564,19 +432,6 @@ QString CoreProcess::persistServerConfig() const
   m_serverConfig.save(configFile);
   configFile.close();
   return configFile.fileName();
-}
-
-QString CoreProcess::modeString() const
-{
-  switch (m_mode) {
-  case Settings::CoreMode::Server:
-    return "server";
-  case Settings::CoreMode::Client:
-    return "client";
-  default:
-    qFatal("invalid core mode");
-    return "";
-  }
 }
 
 void CoreProcess::setConnectionState(ConnectionState state)
@@ -629,7 +484,7 @@ void CoreProcess::checkLogLine(const QString &line)
 
   // server and client processes are not allowed to show notifications.
   // process the log from it and show notification from deskflow instead.
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
   checkOSXNotification(line);
 #endif
 }
@@ -647,7 +502,7 @@ bool CoreProcess::checkSecureSocket(const QString &line)
   return true;
 }
 
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
 void CoreProcess::checkOSXNotification(const QString &line)
 {
   static const QString needle = "OSX Notification: ";
@@ -663,16 +518,9 @@ void CoreProcess::checkOSXNotification(const QString &line)
 }
 #endif
 
-QString CoreProcess::correctedInterface() const
+QString CoreProcess::correctedAddress(const QString &address) const
 {
-  const QString interface = wrapIpv6(Settings::value(Settings::Core::Interface).toString());
-  const auto port = Settings::value(Settings::Core::Port).toString();
-  return QStringLiteral("%1:%2").arg(interface, port);
-}
-
-QString CoreProcess::correctedAddress() const
-{
-  return wrapIpv6(m_address);
+  return wrapIpv6(address.simplified());
 }
 
 QString CoreProcess::requestDaemonLogPath()
@@ -684,17 +532,16 @@ QString CoreProcess::requestDaemonLogPath()
     return QString();
   }
 
-  if (QFileInfo logFile(logPath); !logFile.exists() || !logFile.isFile()) {
-    qWarning() << "daemon log path file does not exist:" << logPath;
-    return QString();
+  if (QFileInfo logFile(logPath); !logFile.isFile()) {
+    auto file = QFile(logPath);
+    if (!file.open(QFile::ReadWrite)) {
+      qCritical() << "daemon log path file can not be written:" << logPath;
+      return QString();
+    }
+    file.write(""); // Create an empty file
   }
 
   return logPath;
-}
-
-void CoreProcess::persistLogDir() const
-{
-  QDir(QFileInfo(Settings::value(Settings::Log::File).toString()).absolutePath()).mkpath(".");
 }
 
 void CoreProcess::clearSettings()

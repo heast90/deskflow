@@ -1,2 +1,3 @@
 disable-update-check.patch
-github8851-fix-failure-s390.patch
+CVE-2026-41476.patch
+CVE-2026-44296.patch

@@ -7,9 +7,7 @@
 
 #pragma once
 
-#include "base/DirectionTypes.h"
-#include "base/EventTypes.h"
-
+#include <cstdint>
 /**
  * @file ProtocolTypes.h
  * @brief Deskflow Network Protocol Specification and Implementation
@@ -203,26 +201,6 @@ enum class TransferState : uint8_t
  * @brief Connection establishment and version negotiation
  * @{
  */
-
-/**
- * @brief Protocol name for Synergy compatibility
- *
- * Used in handshake messages to identify the protocol as Synergy-compatible.
- * Must be exactly 7 characters for backward compatibility.
- *
- * @since Protocol version 1.0
- */
-extern const char *const kSynergyProtocolName;
-
-/**
- * @brief Protocol name for Barrier compatibility
- *
- * Used in handshake messages to identify the protocol as Barrier-compatible.
- * Must be exactly 7 characters for backward compatibility.
- *
- * @since Protocol version 1.0
- */
-extern const char *const kBarrierProtocolName;
 
 /**
  * @brief Server hello message

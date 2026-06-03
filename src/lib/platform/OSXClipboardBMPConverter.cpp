@@ -48,9 +48,9 @@ static void toLE(uint8_t *&dst, uint32_t src)
   dst += 4;
 }
 
-IClipboard::EFormat OSXClipboardBMPConverter::getFormat() const
+IClipboard::Format OSXClipboardBMPConverter::getFormat() const
 {
-  return IClipboard::kBitmap;
+  return IClipboard::Format::Bitmap;
 }
 
 CFStringRef OSXClipboardBMPConverter::getOSXFormat() const
@@ -61,7 +61,7 @@ CFStringRef OSXClipboardBMPConverter::getOSXFormat() const
 
 std::string OSXClipboardBMPConverter::fromIClipboard(const std::string &bmp) const
 {
-  LOG((CLOG_DEBUG1 "getting data from clipboard"));
+  LOG_DEBUG1("getting data from clipboard");
   // create BMP image
   uint8_t header[14];
   uint8_t *dst = header;

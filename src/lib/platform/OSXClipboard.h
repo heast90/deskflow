@@ -1,5 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
+ * SPDX-FileCopyrightText: (C) 2025 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2012 - 2016 Symless Ltd.
  * SPDX-FileCopyrightText: (C) 2004 Chris Schoeneman
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
@@ -26,12 +27,12 @@ public:
 
   // IClipboard overrides
   bool empty() override;
-  void add(EFormat, const std::string &data) override;
+  void add(Format, const std::string &data) override;
   bool open(Time) const override;
   void close() const override;
   Time getTime() const override;
-  bool has(EFormat) const override;
-  std::string get(EFormat) const override;
+  bool has(Format) const override;
+  std::string get(Format) const override;
 
   bool synchronize();
 
@@ -50,9 +51,10 @@ private:
 /*!
 This interface defines the methods common to all Scrap book format
 */
-class IOSXClipboardConverter : public IInterface
+class IOSXClipboardConverter
 {
 public:
+  virtual ~IOSXClipboardConverter() = default;
   //! @name accessors
   //@{
 
@@ -60,7 +62,7 @@ public:
   /*!
   Return the clipboard format this object converts from/to.
   */
-  virtual IClipboard::EFormat getFormat() const = 0;
+  virtual IClipboard::Format getFormat() const = 0;
 
   //! returns the scrap flavor type that this object converts from/to
   virtual CFStringRef getOSXFormat() const = 0;

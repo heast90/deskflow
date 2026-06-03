@@ -1,6 +1,6 @@
 /*
  * Deskflow -- mouse and keyboard sharing utility
- * SPDX-FileCopyrightText: (C) 2025 Deskflow Developers
+ * SPDX-FileCopyrightText: (C) 2025 - 2026 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2012 - 2016 Symless Ltd.
  * SPDX-FileCopyrightText: (C) 2004 Chris Schoeneman
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
@@ -9,6 +9,7 @@
 #include "base/EventQueue.h"
 
 #include "arch/Arch.h"
+#include "base/EventQueueTimer.h"
 #include "base/Log.h"
 #include "base/SimpleEventQueueBuffer.h"
 #include "mt/Lock.h"
@@ -51,11 +52,11 @@ void EventQueue::loop()
     *m_readyCondVar = true;
     m_readyCondVar->signal();
   }
-  LOG((CLOG_DEBUG "event queue is ready"));
+  LOG_DEBUG("event queue is ready");
   while (!m_pending.empty()) {
-    LOG((CLOG_DEBUG "add pending events to buffer"));
-    const Event &event = m_pending.front();
-    addEventToBuffer(event);
+    LOG_DEBUG("add pending events to buffer");
+    Event &event = m_pending.front();
+    addEventToBuffer(std::move(event));
     m_pending.pop();
   }
 
@@ -72,12 +73,12 @@ void EventQueue::adoptBuffer(IEventQueueBuffer *buffer)
 {
   std::scoped_lock lock{m_mutex};
 
-  LOG((CLOG_DEBUG "adopting new buffer"));
+  LOG_DEBUG("adopting new buffer");
 
   if (m_events.size() != 0) {
     // this can come as a nasty surprise to programmers expecting
     // their events to be raised, only to have them deleted.
-    LOG((CLOG_DEBUG "discarding %d event(s)", m_events.size()));
+    LOG_DEBUG("discarding %d event(s)", m_events.size());
   }
 
   // discard old buffer and old events
@@ -171,7 +172,7 @@ bool EventQueue::dispatchEvent(const Event &event)
   return false;
 }
 
-void EventQueue::addEvent(const Event &event)
+void EventQueue::addEvent(Event &&event)
 {
   // discard bogus event types
   switch (event.getType()) {
@@ -188,24 +189,24 @@ void EventQueue::addEvent(const Event &event)
     dispatchEvent(event);
     Event::deleteData(event);
   } else if (!(*m_readyCondVar)) {
-    m_pending.push(event);
+    m_pending.push(std::move(event));
   } else {
-    addEventToBuffer(event);
+    addEventToBuffer(std::move(event));
   }
 }
 
-void EventQueue::addEventToBuffer(const Event &event)
+void EventQueue::addEventToBuffer(Event &&event)
 {
   std::scoped_lock lock{m_mutex};
 
   // store the event's data locally
-  auto eventID = saveEvent(event);
+  auto eventID = saveEvent(std::move(event));
 
   // add it
   if (!m_buffer->addEvent(eventID)) {
     // failed to send event
-    removeEvent(eventID);
-    Event::deleteData(event);
+    auto removedEvent = removeEvent(eventID);
+    Event::deleteData(removedEvent);
   }
 }
 
@@ -213,7 +214,7 @@ EventQueueTimer *EventQueue::newTimer(double duration, void *target)
 {
   assert(duration > 0.0);
 
-  EventQueueTimer *timer = m_buffer->newTimer(duration, false);
+  auto timer = new EventQueueTimer;
   if (target == nullptr) {
     target = timer;
   }
@@ -230,7 +231,7 @@ EventQueueTimer *EventQueue::newOneShotTimer(double duration, void *target)
 {
   assert(duration > 0.0);
 
-  EventQueueTimer *timer = m_buffer->newTimer(duration, true);
+  auto timer = new EventQueueTimer;
   if (target == nullptr) {
     target = timer;
   }
@@ -255,7 +256,7 @@ void EventQueue::deleteTimer(EventQueueTimer *timer)
   if (Timers::iterator index = m_timers.find(timer); index != m_timers.end()) {
     m_timers.erase(index);
   }
-  m_buffer->deleteTimer(timer);
+  delete timer;
 }
 
 void EventQueue::addHandler(EventTypes type, void *target, const EventHandler &handler)
@@ -270,9 +271,11 @@ void EventQueue::removeHandler(EventTypes type, void *target)
   HandlerTable::iterator index = m_handlers.find(target);
   if (index != m_handlers.end()) {
     TypeHandlerTable &typeHandlers = index->second;
-    TypeHandlerTable::iterator index2 = typeHandlers.find(type);
-    if (index2 != typeHandlers.end()) {
+    if (auto index2 = typeHandlers.find(type); index2 != typeHandlers.end()) {
       typeHandlers.erase(index2);
+    }
+    if (typeHandlers.empty()) {
+      m_handlers.erase(index);
     }
   }
 }
@@ -282,13 +285,8 @@ void EventQueue::removeHandlers(void *target)
   std::scoped_lock lock{m_mutex};
   HandlerTable::iterator index = m_handlers.find(target);
   if (index != m_handlers.end()) {
-    index->second.clear();
+    m_handlers.erase(index);
   }
-}
-
-bool EventQueue::isEmpty() const
-{
-  return (m_buffer->isEmpty() && getNextTimerTimeout() != 0.0);
 }
 
 const EventQueue::EventHandler *EventQueue::getHandler(EventTypes type, void *target) const
@@ -304,7 +302,7 @@ const EventQueue::EventHandler *EventQueue::getHandler(EventTypes type, void *ta
   return nullptr;
 }
 
-uint32_t EventQueue::saveEvent(const Event &event)
+uint32_t EventQueue::saveEvent(Event &&event)
 {
   // choose id
   uint32_t id;
@@ -318,7 +316,7 @@ uint32_t EventQueue::saveEvent(const Event &event)
   }
 
   // save data
-  m_events[id] = event;
+  m_events[id] = std::move(event);
   return id;
 }
 
@@ -331,7 +329,7 @@ Event EventQueue::removeEvent(uint32_t eventID)
   }
 
   // get data
-  Event event = index->second;
+  Event event = std::move(index->second);
   m_events.erase(index);
 
   // save old id for reuse

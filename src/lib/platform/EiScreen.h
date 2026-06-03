@@ -7,13 +7,13 @@
 
 #pragma once
 
-#include "deskflow/KeyMap.h"
+#include "deskflow/IScreen.h"
 #include "deskflow/PlatformScreen.h"
+#include "platform/XDGPowerManager.h"
 
 #include <libei.h>
-#include <memory>
+#include <map>
 #include <mutex>
-#include <set>
 #include <vector>
 
 struct ei;
@@ -23,10 +23,12 @@ struct ei_device;
 
 namespace deskflow {
 
-class EiClipboard;
+class WlClipboardCollection;
 class EiKeyState;
 class PortalRemoteDesktop;
 class PortalInputCapture;
+
+using ClipboardInfo = IScreen::ClipboardInfo;
 
 //! Implementation of IPlatformScreen for X11
 class EiScreen : public PlatformScreen
@@ -57,8 +59,8 @@ public:
   void fakeMouseButton(ButtonID id, bool press) override;
   void fakeMouseMove(std::int32_t x, std::int32_t y) override;
   void fakeMouseRelativeMove(std::int32_t dx, std::int32_t dy) const override;
-  void fakeMouseWheel(std::int32_t xDelta, std::int32_t yDelta) const override;
-  void fakeKey(std::uint32_t keycode, bool is_down) const;
+  void fakeMouseWheel(ScrollDelta delta) const override;
+  void fakeKey(std::uint32_t keycode, bool isDown) const;
 
   // IPlatformScreen overrides
   void enable() override;
@@ -91,6 +93,7 @@ private:
   void initEi();
   void cleanupEi();
   void sendEvent(EventTypes type, void *data);
+  void sendClipboardEvent(EventTypes type, ClipboardID id) const;
   ButtonID mapButtonFromEvdev(ei_event *event) const;
   void onKeyEvent(ei_event *event);
   void onButtonEvent(ei_event *event);
@@ -99,7 +102,7 @@ private:
   void onPointerScrollDiscreteEvent(ei_event *event);
   void onMotionEvent(ei_event *event);
   void onAbsMotionEvent(const ei_event *) const;
-  bool onHotkey(KeyID key, bool is_press, KeyModifierMask mask);
+  bool onHotkey(KeyID key, bool isPressed, KeyModifierMask mask);
   void eiLogEvent(ei_log_priority priority, const char *message) const;
 
   void handleConnectedToEisEvent(const Event &event);
@@ -118,6 +121,11 @@ private:
 
   // keyboard stuff
   EiKeyState *m_keyState = nullptr;
+
+  KeyID m_lastPressed = kKeyNone;
+
+  // clipboard stuff
+  WlClipboardCollection *m_clipboard = nullptr;
 
   std::vector<ei_device *> m_eiDevices;
 
@@ -155,10 +163,10 @@ private:
   {
   public:
     HotKeyItem(std::uint32_t mask, std::uint32_t id);
-    bool operator<(const HotKeyItem &other) const
+    auto operator<=>(const HotKeyItem &other) const
     {
-      return mask < other.mask;
-    };
+      return mask <=> other.mask;
+    }
 
   public:
     std::uint32_t mask = 0;
@@ -172,7 +180,7 @@ private:
     KeyID keyid() const
     {
       return m_id;
-    };
+    }
     bool removeById(std::uint32_t id);
     void addItem(HotKeyItem item);
     std::uint32_t findByMask(std::uint32_t mask) const;
@@ -185,6 +193,7 @@ private:
   using HotKeyMap = std::map<KeyID, HotKeySet>;
 
   HotKeyMap m_hotkeys;
+  [[no_unique_address]] XDGPowerManager m_powerManager;
 };
 
 } // namespace deskflow

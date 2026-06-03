@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2024 Chris Rizzitello <sithlord48@gmail.com>
+# SPDX-FileCopyrightText: (C) 2024 Chris Rizzitello <sithlord48@gmail.com>
 # SPDX-License-Identifier: MIT
 
 # HACK This is set when the files is included so its the real path
@@ -7,21 +7,23 @@ set(MY_DIR ${CMAKE_CURRENT_LIST_DIR})
 
 # Install our desktop file
 install(
-  FILES ${MY_DIR}/org.deskflow.deskflow.desktop
-  DESTINATION share/applications
+  FILES ${MY_DIR}/${CMAKE_PROJECT_REV_FQDN}.desktop
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/applications
 )
 
 # Install our icon
+install(FILES ${MY_DIR}/org.deskflow.deskflow.png DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/512x512/apps/)
+
+# Install our symbolic icon
 install(
-  FILES ${MY_DIR}/deskflow.png
-  DESTINATION share/icons/hicolor/512x512/apps/
-  RENAME org.deskflow.deskflow.png
+  FILES ${CMAKE_SOURCE_DIR}/src/apps/res/icons/deskflow-light/apps/64/org.deskflow.deskflow-symbolic.svg
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/symbolic/apps/
 )
 
 # Install our metainfo
 install(
-  FILES ${MY_DIR}/org.deskflow.deskflow.metainfo.xml
-  DESTINATION share/metainfo/
+  FILES ${MY_DIR}/${CMAKE_PROJECT_REV_FQDN}.metainfo.xml
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo/
 )
 
 # Prepare PKGBUILD for Arch Linux
@@ -31,9 +33,9 @@ configure_file(
   @ONLY
 )
 
-
 set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+set(CPACK_DEBIAN_PACKAGE_RECOMMENDS "qt6-svg-plugins")
 set(CPACK_RPM_PACKAGE_LICENSE "GPLv2")
 set(CPACK_RPM_PACKAGE_GROUP "Applications/System")
 

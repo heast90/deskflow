@@ -1,5 +1,5 @@
-# SPDX-FileCopyrightText: 2024 Deskflow Developers
-# SPDX-FileCopyrightText: 2024 Symless Ltd
+# SPDX-FileCopyrightText: (C) 2024 Deskflow Developers
+# SPDX-FileCopyrightText: (C) 2024 Symless Ltd
 # SPDX-License-Identifier: MIT
 
 set(target gui)
@@ -17,12 +17,8 @@ add_library(${target} STATIC
   ${platform_sources}
   Action.cpp
   Action.h
-  DataDownloader.cpp
-  DataDownloader.h
   Diagnostic.cpp
   Diagnostic.h
-  DotEnv.cpp
-  DotEnv.h
   FileTail.cpp
   FileTail.h
   Hotkey.cpp
@@ -38,10 +34,9 @@ add_library(${target} STATIC
   Messages.h
   ScreenSetupModel.cpp
   ScreenSetupModel.h
-  ServerConfig.cpp
-  ServerConfig.h
-  Styles.h
   StyleUtils.h
+  TlsUtility.cpp
+  TlsUtility.h
   VersionChecker.cpp
   VersionChecker.h
   config/IServerConfig.h
@@ -51,12 +46,14 @@ add_library(${target} STATIC
   config/ScreenConfig.h
   config/ScreenList.cpp
   config/ScreenList.h
+  config/ServerConfig.cpp
+  config/ServerConfig.h
   core/ClientConnection.cpp
   core/ClientConnection.h
-  core/CommandProcess.cpp
-  core/CommandProcess.h
   core/CoreProcess.cpp
   core/CoreProcess.h
+  core/NetworkMonitor.cpp
+  core/NetworkMonitor.h
   core/ServerConnection.cpp
   core/ServerConnection.h
   core/ServerMessage.cpp
@@ -69,9 +66,9 @@ add_library(${target} STATIC
   dialogs/ActionDialog.cpp
   dialogs/ActionDialog.h
   dialogs/ActionDialog.ui
-  dialogs/AddClientDialog.cpp
-  dialogs/AddClientDialog.h
-  dialogs/AddClientDialog.ui
+  dialogs/ClientConfigDialog.h
+  dialogs/ClientConfigDialog.cpp
+  dialogs/ClientConfigDialog.ui
   dialogs/FingerprintDialog.cpp
   dialogs/FingerprintDialog.h
   dialogs/HotkeyDialog.cpp
@@ -88,12 +85,6 @@ add_library(${target} STATIC
   dialogs/SettingsDialog.ui
   ipc/DaemonIpcClient.cpp
   ipc/DaemonIpcClient.h
-  proxy/QProcessProxy.cpp
-  proxy/QProcessProxy.h
-  tls/TlsCertificate.cpp
-  tls/TlsCertificate.h
-  tls/TlsUtility.cpp
-  tls/TlsUtility.h
   validators/AliasValidator.cpp
   validators/AliasValidator.h
   validators/ComputerNameValidator.cpp
@@ -112,14 +103,22 @@ add_library(${target} STATIC
   validators/SpacesValidator.h
   validators/ValidationError.cpp
   validators/ValidationError.h
+  validators/IpAddressValidator.cpp
+  validators/IpAddressValidator.h
   widgets/FingerprintPreview.cpp
   widgets/FingerprintPreview.h
   widgets/KeySequenceWidget.cpp
   widgets/KeySequenceWidget.h
+  widgets/LogDock.cpp
+  widgets/LogDock.h
+  widgets/LogWidget.h
+  widgets/LogWidget.cpp
   widgets/NewScreenWidget.cpp
   widgets/NewScreenWidget.h
   widgets/ScreenSetupView.cpp
   widgets/ScreenSetupView.h
+  widgets/SearchWidget.h
+  widgets/SearchWidget.cpp
   widgets/TrashScreenWidget.cpp
   widgets/TrashScreenWidget.h
 )

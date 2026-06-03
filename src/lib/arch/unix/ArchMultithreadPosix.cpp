@@ -8,7 +8,7 @@
 #include "arch/unix/ArchMultithreadPosix.h"
 
 #include "arch/Arch.h"
-#include "arch/XArch.h"
+#include "arch/ArchException.h"
 
 #include <cerrno>
 #include <signal.h>
@@ -584,7 +584,7 @@ void ArchMultithreadPosix::testCancelThreadImpl(ArchThreadImpl *thread)
 
   // unwind thread's stack if cancelling
   if (cancel) {
-    throw XThreadCancel();
+    throw ThreadCancelException();
   }
 }
 
@@ -620,7 +620,7 @@ void ArchMultithreadPosix::doThreadFunc(ArchThread thread)
     result = (*thread->m_func)(thread->m_userData);
   }
 
-  catch (XThreadCancel &) {
+  catch (ThreadCancelException &) {
     // client called cancel()
     // set base value
     result = nullptr;
@@ -672,12 +672,8 @@ void *ArchMultithreadPosix::threadSignalHandler(void *)
   // we exit the loop via thread cancellation in sigwait()
   for (;;) {
     // wait
-#if HAVE_POSIX_SIGWAIT
     int signal = 0;
     sigwait(&sigset, &signal);
-#else
-    sigwait(&sigset);
-#endif
 
     // if we get here then the signal was raised
     switch (signal) {

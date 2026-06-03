@@ -52,7 +52,7 @@ public:
     uint32_t m_client{};           //!< Client data
 
   public:
-    bool operator==(const KeyItem &) const;
+    bool operator==(const KeyItem &) const = default;
   };
 
   //! The KeyButtons needed to synthesize a KeyID
@@ -71,10 +71,10 @@ public:
   class Keystroke
   {
   public:
-    enum EType
+    enum class KeyType
     {
-      kButton, //!< Synthesize button
-      kGroup   //!< Set new group
+      Button, //!< Synthesize button
+      Group   //!< Set new group
     };
 
     Keystroke(KeyButton, bool press, bool repeat, uint32_t clientData);
@@ -103,7 +103,7 @@ public:
       Group m_group;
     };
 
-    EType m_type{};
+    KeyType m_type{};
     Data m_data{};
   };
 

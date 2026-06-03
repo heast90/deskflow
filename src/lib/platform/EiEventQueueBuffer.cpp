@@ -14,20 +14,13 @@
 #include "mt/Thread.h"
 
 #include <cassert>
-#include <cstdio>
 #include <fcntl.h>
 #include <poll.h>
 #include <unistd.h>
 
-class EventQueueTimer
-{
-};
-
 namespace deskflow {
 
-EiEventQueueBuffer::EiEventQueueBuffer(const EiScreen *screen, ei *ei, IEventQueue *events)
-    : m_ei{ei_ref(ei)},
-      m_events{events}
+EiEventQueueBuffer::EiEventQueueBuffer(ei *ei, IEventQueue *events) : m_ei{ei_ref(ei)}, m_events{events}
 {
   // We need a pipe to signal ourselves when addEvent() is called
   int pipefd[2];
@@ -45,7 +38,7 @@ EiEventQueueBuffer::~EiEventQueueBuffer()
   close(m_pipeWrite);
 }
 
-void EiEventQueueBuffer::waitForEvent(double timeout_in_ms)
+void EiEventQueueBuffer::waitForEvent(double msTimeout)
 {
   Thread::testCancel();
 
@@ -59,7 +52,7 @@ void EiEventQueueBuffer::waitForEvent(double timeout_in_ms)
   pfds[s_pipeFd].fd = m_pipeRead;
   pfds[s_pipeFd].events = POLLIN;
 
-  int timeout = (timeout_in_ms < 0.0) ? -1 : static_cast<int>(1000.0 * timeout_in_ms);
+  int timeout = (msTimeout < 0.0) ? -1 : static_cast<int>(1000.0 * msTimeout);
 
   if (int retval = poll(pfds, s_pollFdCount, timeout); retval > 0) {
     if (pfds[s_eiFd].revents & POLLIN) {
@@ -137,16 +130,6 @@ bool EiEventQueueBuffer::isEmpty() const
   std::scoped_lock lock{m_mutex};
 
   return m_queue.empty();
-}
-
-EventQueueTimer *EiEventQueueBuffer::newTimer(double duration, bool oneShot) const
-{
-  return new EventQueueTimer;
-}
-
-void EiEventQueueBuffer::deleteTimer(EventQueueTimer *timer) const
-{
-  delete timer;
 }
 
 } // namespace deskflow

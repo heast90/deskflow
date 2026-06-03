@@ -7,22 +7,11 @@
 
 #include "UnicodeTests.h"
 
-#include "arch/ArchString.h"
 #include "base/Unicode.h"
 
 void UnicodeTests::initTestCase()
 {
-  m_arch.init();
   m_log.setFilter(LogLevel::Debug2);
-}
-
-void UnicodeTests::UTF32ToUTF8()
-{
-  bool errors;
-  auto result = Unicode::UTF32ToUTF8(std::string("h\0\0\0e\0\0\0l\0\0\0l\0\0\0o\0\0\0", 20), &errors);
-
-  QVERIFY(!errors);
-  QCOMPARE(result.c_str(), "hello");
 }
 
 void UnicodeTests::UTF16ToUTF8()
@@ -32,28 +21,6 @@ void UnicodeTests::UTF16ToUTF8()
 
   QVERIFY(!errors);
   QCOMPARE(result.c_str(), "hello");
-}
-
-void UnicodeTests::UCS2ToUTF8_kUCS2()
-{
-  bool errors;
-  auto result = Unicode::textToUTF8("hello", &errors, ArchString::EWideCharEncoding::kUCS2);
-
-  QVERIFY(!errors);
-#ifdef _WIN32
-  QCOMPARE(result, std::string("hello", 5)); // mixed-platform expected result
-#else
-  QCOMPARE(result, std::string("h\0e\0l", 5)); // mixed-platform expected result
-#endif // _WIN32
-}
-
-void UnicodeTests::UCS2ToUTF8()
-{
-  bool errors;
-  auto result = Unicode::textToUTF8("hello", &errors);
-
-  QVERIFY(!errors);
-  QCOMPARE(result, std::string("hello", 5)); // mixed-platform expected result
 }
 
 QTEST_MAIN(UnicodeTests)

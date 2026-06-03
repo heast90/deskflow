@@ -8,8 +8,6 @@
 #include "server/PrimaryClient.h"
 
 #include "base/Log.h"
-#include "deskflow/AppUtil.h"
-#include "deskflow/Clipboard.h"
 #include "deskflow/Screen.h"
 //
 // PrimaryClient
@@ -215,7 +213,7 @@ std::string PrimaryClient::getSecureInputApp() const
 
 void PrimaryClient::secureInputNotification(const std::string &app) const
 {
-  LOG((CLOG_INFO "application \"%s\" is blocking the keyboard", app.c_str()));
+  LOG_INFO("application \"%s\" is blocking the keyboard", app.c_str());
 }
 
 void PrimaryClient::resetOptions()
