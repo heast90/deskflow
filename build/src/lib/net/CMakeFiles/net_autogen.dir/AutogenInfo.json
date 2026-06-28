@@ -1,0 +1,322 @@
+{
+	"BUILD_DIR" : "/home/hdd25/.deskflow/deskflow-deepin/build/src/lib/net/net_autogen",
+	"CMAKE_BINARY_DIR" : "/home/hdd25/.deskflow/deskflow-deepin/build",
+	"CMAKE_CURRENT_BINARY_DIR" : "/home/hdd25/.deskflow/deskflow-deepin/build/src/lib/net",
+	"CMAKE_CURRENT_SOURCE_DIR" : "/home/hdd25/.deskflow/deskflow-deepin/src/lib/net",
+	"CMAKE_EXECUTABLE" : "/usr/bin/cmake",
+	"CMAKE_LIST_FILES" : 
+	[
+		"/home/hdd25/.deskflow/deskflow-deepin/src/lib/net/CMakeLists.txt",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/Qt6ConfigVersion.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/Qt6ConfigVersionImpl.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/Qt6Config.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/Qt6ConfigExtras.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicCMakeVersionHelpers.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicCMakeHelpers.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtInstallPaths.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/Qt6Targets.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/Qt6VersionlessAliasTargets.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtFeature.cmake",
+		"/usr/share/cmake-3.31/Modules/CheckCXXCompilerFlag.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtFeatureCommon.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicAppleHelpers.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicCMakeHelpers.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicCMakeVersionHelpers.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicDependencyHelpers.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicExternalProjectHelpers.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicFinalizerHelpers.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicFindPackageHelpers.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicGitHelpers.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicPluginHelpers.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicSbomAttributionHelpers.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicSbomCpeHelpers.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicSbomDepHelpers.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicSbomFileHelpers.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicSbomGenerationHelpers.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicSbomHelpers.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicSbomLicenseHelpers.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicSbomOpsHelpers.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicSbomPurlHelpers.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicSbomPythonHelpers.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicSbomQtEntityHelpers.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicSbomSystemDepHelpers.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicTargetHelpers.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicTestHelpers.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicToolHelpers.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicWalkLibsHelpers.cmake",
+		"/usr/share/cmake-3.31/Modules/CMakeFindDependencyMacro.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/Qt6Dependencies.cmake",
+		"/usr/share/cmake-3.31/Modules/FindOpenSSL.cmake",
+		"/usr/share/cmake-3.31/Modules/FindPkgConfig.cmake",
+		"/usr/share/cmake-3.31/Modules/FindPackageHandleStandardArgs.cmake",
+		"/usr/share/cmake-3.31/Modules/FindPackageMessage.cmake",
+		"/usr/share/cmake-3.31/Modules/FindPackageHandleStandardArgs.cmake",
+		"/usr/share/cmake-3.31/Modules/FindPackageMessage.cmake"
+	],
+	"CMAKE_SOURCE_DIR" : "/home/hdd25/.deskflow/deskflow-deepin",
+	"CROSS_CONFIG" : false,
+	"DEP_FILE" : "/home/hdd25/.deskflow/deskflow-deepin/build/src/lib/net/net_autogen/deps",
+	"DEP_FILE_RULE_NAME" : "net_autogen/timestamp",
+	"HEADERS" : 
+	[
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/net/Fingerprint.h",
+			"MU",
+			"EWIEGA46WW/moc_Fingerprint.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/net/FingerprintDatabase.h",
+			"MU",
+			"EWIEGA46WW/moc_FingerprintDatabase.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/net/IDataSocket.h",
+			"MU",
+			"EWIEGA46WW/moc_IDataSocket.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/net/IListenSocket.h",
+			"MU",
+			"EWIEGA46WW/moc_IListenSocket.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/net/ISocket.h",
+			"MU",
+			"EWIEGA46WW/moc_ISocket.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/net/ISocketFactory.h",
+			"MU",
+			"EWIEGA46WW/moc_ISocketFactory.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/net/ISocketMultiplexerJob.h",
+			"MU",
+			"EWIEGA46WW/moc_ISocketMultiplexerJob.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/net/NetworkAddress.h",
+			"MU",
+			"EWIEGA46WW/moc_NetworkAddress.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/net/SecureListenSocket.h",
+			"MU",
+			"EWIEGA46WW/moc_SecureListenSocket.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/net/SecureSocket.h",
+			"MU",
+			"EWIEGA46WW/moc_SecureSocket.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/net/SecureUtils.h",
+			"MU",
+			"EWIEGA46WW/moc_SecureUtils.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/net/SecurityLevel.h",
+			"MU",
+			"EWIEGA46WW/moc_SecurityLevel.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/net/SocketException.h",
+			"MU",
+			"EWIEGA46WW/moc_SocketException.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/net/SocketMultiplexer.h",
+			"MU",
+			"EWIEGA46WW/moc_SocketMultiplexer.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/net/SslLogger.h",
+			"MU",
+			"EWIEGA46WW/moc_SslLogger.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/net/TCPListenSocket.h",
+			"MU",
+			"EWIEGA46WW/moc_TCPListenSocket.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/net/TCPSocket.h",
+			"MU",
+			"EWIEGA46WW/moc_TCPSocket.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/net/TCPSocketFactory.h",
+			"MU",
+			"EWIEGA46WW/moc_TCPSocketFactory.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/net/TSocketMultiplexerMethodJob.h",
+			"MU",
+			"EWIEGA46WW/moc_TSocketMultiplexerMethodJob.cpp",
+			null
+		]
+	],
+	"HEADER_EXTENSIONS" : [ "h", "hh", "h++", "hm", "hpp", "hxx", "in", "txx" ],
+	"INCLUDE_DIR" : "/home/hdd25/.deskflow/deskflow-deepin/build/src/lib/net/net_autogen/include",
+	"MOC_COMPILATION_FILE" : "/home/hdd25/.deskflow/deskflow-deepin/build/src/lib/net/net_autogen/mocs_compilation.cpp",
+	"MOC_DEFINITIONS" : 
+	[
+		"HAVE_FORMAT",
+		"NDEBUG",
+		"QT_CORE_LIB",
+		"QT_NETWORK_LIB",
+		"QT_NO_DEBUG",
+		"QT_NO_KEYWORDS",
+		"SYSAPI_UNIX=1",
+		"WINAPI_XWINDOWS=1"
+	],
+	"MOC_DEPEND_FILTERS" : 
+	[
+		[
+			"Q_PLUGIN_METADATA",
+			"[\n][ \t]*Q_PLUGIN_METADATA[ \t]*\\([^\\)]*FILE[ \t]*\"([^\"]+)\""
+		]
+	],
+	"MOC_INCLUDES" : 
+	[
+		"/usr/include/glib-2.0",
+		"/usr/lib/x86_64-linux-gnu/glib-2.0/include",
+		"/usr/include/sysprof-6",
+		"/home/hdd25/.deskflow/deskflow-deepin/src/lib",
+		"/home/hdd25/.deskflow/deskflow-deepin/build/src/lib",
+		"/usr/include/x86_64-linux-gnu/qt6/QtNetwork",
+		"/usr/include/x86_64-linux-gnu/qt6",
+		"/usr/include/x86_64-linux-gnu/qt6/QtCore",
+		"/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++",
+		"/usr/include",
+		"/usr/include/c++/13",
+		"/usr/include/x86_64-linux-gnu/c++/13",
+		"/usr/include/c++/13/backward",
+		"/usr/lib/gcc/x86_64-linux-gnu/13/include",
+		"/usr/local/include",
+		"/usr/include/x86_64-linux-gnu"
+	],
+	"MOC_MACRO_NAMES" : 
+	[
+		"Q_OBJECT",
+		"Q_GADGET",
+		"Q_NAMESPACE",
+		"Q_NAMESPACE_EXPORT",
+		"Q_GADGET_EXPORT",
+		"Q_ENUM_NS"
+	],
+	"MOC_OPTIONS" : [],
+	"MOC_PATH_PREFIX" : false,
+	"MOC_PREDEFS_CMD" : 
+	[
+		"/usr/bin/c++",
+		"-std=c++20",
+		"-dM",
+		"-E",
+		"-c",
+		"/usr/share/cmake-3.31/Modules/CMakeCXXCompilerABI.cpp"
+	],
+	"MOC_PREDEFS_FILE" : "/home/hdd25/.deskflow/deskflow-deepin/build/src/lib/net/net_autogen/moc_predefs.h",
+	"MOC_RELAXED_MODE" : false,
+	"MOC_SKIP" : [],
+	"MULTI_CONFIG" : false,
+	"PARALLEL" : 2,
+	"PARSE_CACHE_FILE" : "/home/hdd25/.deskflow/deskflow-deepin/build/src/lib/net/CMakeFiles/net_autogen.dir/ParseCache.txt",
+	"QT_MOC_EXECUTABLE" : "/usr/lib/qt6/libexec/moc",
+	"QT_UIC_EXECUTABLE" : "/usr/lib/qt6/libexec/uic",
+	"QT_VERSION_MAJOR" : 6,
+	"QT_VERSION_MINOR" : 8,
+	"SETTINGS_FILE" : "/home/hdd25/.deskflow/deskflow-deepin/build/src/lib/net/CMakeFiles/net_autogen.dir/AutogenUsed.txt",
+	"SOURCES" : 
+	[
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/net/Fingerprint.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/net/FingerprintDatabase.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/net/IDataSocket.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/net/NetworkAddress.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/net/SecureListenSocket.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/net/SecureSocket.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/net/SecureUtils.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/net/SocketException.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/net/SocketMultiplexer.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/net/SslLogger.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/net/TCPListenSocket.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/net/TCPSocket.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/net/TCPSocketFactory.cpp",
+			"MU",
+			null
+		]
+	],
+	"UIC_OPTIONS" : [],
+	"UIC_SEARCH_PATHS" : [],
+	"UIC_SKIP" : [],
+	"UIC_UI_FILES" : [],
+	"USE_BETTER_GRAPH" : true,
+	"VERBOSITY" : 0
+}

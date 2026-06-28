@@ -270,6 +270,7 @@ ServerProxy::ConnectionResult ServerProxy::parseMessage(const uint8_t *code)
   }
 
   else if (memcmp(code, kMsgCClipboard, 4) == 0) {
+    LOG_DEBUG("[CLIP-CU-SP-007] ServerProxy.cpp:parseMessage() -- received kMsgCClipboard from server");
     grabClipboard();
   }
 
@@ -286,6 +287,7 @@ ServerProxy::ConnectionResult ServerProxy::parseMessage(const uint8_t *code)
   }
 
   else if (memcmp(code, kMsgDClipboard, 4) == 0) {
+    LOG_DEBUG("[CLIP-CU-SP-008] ServerProxy.cpp:parseMessage() -- received kMsgDClipboard from server");
     setClipboard();
   }
 
@@ -344,13 +346,14 @@ void ServerProxy::onInfoChanged()
 
 bool ServerProxy::onGrabClipboard(ClipboardID id)
 {
-  LOG_DEBUG1("sending clipboard %d changed", id);
+  LOG_DEBUG("[CLIP-CU-SP-001] ServerProxy.cpp:345 onGrabClipboard() -- sending kMsgCClipboard to server, id=%d", id);
   ProtocolUtil::writef(m_stream, kMsgCClipboard, id, m_seqNum);
   return true;
 }
 
 void ServerProxy::onClipboardChanged(ClipboardID id, const IClipboard *clipboard)
 {
+  LOG_DEBUG("[CLIP-CU-SP-002] ServerProxy.cpp:352 onClipboardChanged() -- sending kMsgDClipboard to server, id=%d", id);
   std::string data = IClipboard::marshall(clipboard);
   LOG_DEBUG("sending clipboard %d seqnum=%d", id, m_seqNum);
 
@@ -519,6 +522,7 @@ void ServerProxy::leave()
 
 void ServerProxy::setClipboard()
 {
+  LOG_DEBUG("[CLIP-CU-SP-004] ServerProxy.cpp:520 setClipboard() -- receiving clipboard from server");
   // parse
   static std::string dataCached;
   ClipboardID id;
@@ -535,6 +539,7 @@ void ServerProxy::setClipboard()
     // forward
     Clipboard clipboard;
     clipboard.unmarshall(dataCached, 0);
+    LOG_DEBUG("[CLIP-CU-SP-006] ServerProxy.cpp:setClipboard() -- forwarding to Client::setClipboard(), id=%d, size=%zu", id, dataCached.size());
     m_client->setClipboard(id, &clipboard);
 
     LOG_INFO("clipboard was updated");

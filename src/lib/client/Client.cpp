@@ -172,6 +172,7 @@ void *Client::getEventTarget() const
 
 bool Client::getClipboard(ClipboardID id, IClipboard *clipboard) const
 {
+  LOG_DEBUG("[CLIP-CU-CL-001] Client.cpp:173 getClipboard() -- reading local clipboard, id=%d", id);
   return m_screen->getClipboard(id, clipboard);
 }
 
@@ -201,9 +202,8 @@ bool Client::leave()
   if (m_enableClipboard) {
     // send clipboards that we own and that have changed
     for (ClipboardID id = 0; id < kClipboardEnd; ++id) {
-      if (m_ownClipboard[id]) {
-        sendClipboard(id);
-      }
+      LOG_DEBUG("[CLIP-CU-CL-007] Client.cpp:205 leave() -- sending clipboard %d to server, ownClipboard=%d, sentClipboard=%d", id, m_ownClipboard[id], m_sentClipboard[id]);
+      sendClipboard(id);
     }
   }
 
@@ -212,6 +212,7 @@ bool Client::leave()
 
 void Client::setClipboard(ClipboardID id, const IClipboard *clipboard)
 {
+  LOG_DEBUG("[CLIP-CU-CL-002] Client.cpp:213 setClipboard() -- writing to local clipboard, id=%d, ownClipboard=%d, sentClipboard=%d", id, m_ownClipboard[id], m_sentClipboard[id]);
   m_screen->setClipboard(id, clipboard);
   m_ownClipboard[id] = false;
   m_sentClipboard[id] = false;
@@ -219,6 +220,7 @@ void Client::setClipboard(ClipboardID id, const IClipboard *clipboard)
 
 void Client::grabClipboard(ClipboardID id)
 {
+  LOG_DEBUG("[CLIP-CU-CL-004] Client.cpp:220 grabClipboard() -- clipboard invalidated by server, id=%d, ownClipboard=%d, sentClipboard=%d", id, m_ownClipboard[id], m_sentClipboard[id]);
   m_screen->grabClipboard(id);
   m_ownClipboard[id] = false;
   m_sentClipboard[id] = false;

@@ -1,0 +1,282 @@
+{
+	"BUILD_DIR" : "/home/hdd25/.deskflow/deskflow-deepin/build/src/lib/server/server_autogen",
+	"CMAKE_BINARY_DIR" : "/home/hdd25/.deskflow/deskflow-deepin/build",
+	"CMAKE_CURRENT_BINARY_DIR" : "/home/hdd25/.deskflow/deskflow-deepin/build/src/lib/server",
+	"CMAKE_CURRENT_SOURCE_DIR" : "/home/hdd25/.deskflow/deskflow-deepin/src/lib/server",
+	"CMAKE_EXECUTABLE" : "/usr/bin/cmake",
+	"CMAKE_LIST_FILES" : [ "/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/CMakeLists.txt" ],
+	"CMAKE_SOURCE_DIR" : "/home/hdd25/.deskflow/deskflow-deepin",
+	"CROSS_CONFIG" : false,
+	"DEP_FILE" : "/home/hdd25/.deskflow/deskflow-deepin/build/src/lib/server/server_autogen/deps",
+	"DEP_FILE_RULE_NAME" : "server_autogen/timestamp",
+	"HEADERS" : 
+	[
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/BaseClientProxy.h",
+			"MU",
+			"EWIEGA46WW/moc_BaseClientProxy.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientListener.h",
+			"MU",
+			"EWIEGA46WW/moc_ClientListener.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy.h",
+			"MU",
+			"EWIEGA46WW/moc_ClientProxy.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy1_0.h",
+			"MU",
+			"EWIEGA46WW/moc_ClientProxy1_0.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy1_1.h",
+			"MU",
+			"EWIEGA46WW/moc_ClientProxy1_1.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy1_2.h",
+			"MU",
+			"EWIEGA46WW/moc_ClientProxy1_2.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy1_3.h",
+			"MU",
+			"EWIEGA46WW/moc_ClientProxy1_3.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy1_4.h",
+			"MU",
+			"EWIEGA46WW/moc_ClientProxy1_4.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy1_5.h",
+			"MU",
+			"EWIEGA46WW/moc_ClientProxy1_5.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy1_6.h",
+			"MU",
+			"EWIEGA46WW/moc_ClientProxy1_6.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy1_7.h",
+			"MU",
+			"EWIEGA46WW/moc_ClientProxy1_7.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy1_8.h",
+			"MU",
+			"EWIEGA46WW/moc_ClientProxy1_8.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxyUnknown.h",
+			"MU",
+			"EWIEGA46WW/moc_ClientProxyUnknown.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/Config.h",
+			"MU",
+			"EWIEGA46WW/moc_Config.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/InputFilter.h",
+			"MU",
+			"EWIEGA46WW/moc_InputFilter.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/PrimaryClient.h",
+			"MU",
+			"EWIEGA46WW/moc_PrimaryClient.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/Server.h",
+			"MU",
+			"EWIEGA46WW/moc_Server.cpp",
+			null
+		]
+	],
+	"HEADER_EXTENSIONS" : [ "h", "hh", "h++", "hm", "hpp", "hxx", "in", "txx" ],
+	"INCLUDE_DIR" : "/home/hdd25/.deskflow/deskflow-deepin/build/src/lib/server/server_autogen/include",
+	"MOC_COMPILATION_FILE" : "/home/hdd25/.deskflow/deskflow-deepin/build/src/lib/server/server_autogen/mocs_compilation.cpp",
+	"MOC_DEFINITIONS" : 
+	[
+		"HAVE_FORMAT",
+		"NDEBUG",
+		"QT_CORE_LIB",
+		"QT_NETWORK_LIB",
+		"QT_NO_DEBUG",
+		"QT_NO_KEYWORDS",
+		"SYSAPI_UNIX=1",
+		"WINAPI_XWINDOWS=1"
+	],
+	"MOC_DEPEND_FILTERS" : 
+	[
+		[
+			"Q_PLUGIN_METADATA",
+			"[\n][ \t]*Q_PLUGIN_METADATA[ \t]*\\([^\\)]*FILE[ \t]*\"([^\"]+)\""
+		]
+	],
+	"MOC_INCLUDES" : 
+	[
+		"/usr/include/glib-2.0",
+		"/usr/lib/x86_64-linux-gnu/glib-2.0/include",
+		"/usr/include/sysprof-6",
+		"/home/hdd25/.deskflow/deskflow-deepin/src/lib",
+		"/home/hdd25/.deskflow/deskflow-deepin/build/src/lib",
+		"/usr/include/x86_64-linux-gnu/qt6/QtCore",
+		"/usr/include/x86_64-linux-gnu/qt6",
+		"/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++",
+		"/usr/include/x86_64-linux-gnu/qt6/QtNetwork",
+		"/usr/include",
+		"/usr/include/c++/13",
+		"/usr/include/x86_64-linux-gnu/c++/13",
+		"/usr/include/c++/13/backward",
+		"/usr/lib/gcc/x86_64-linux-gnu/13/include",
+		"/usr/local/include",
+		"/usr/include/x86_64-linux-gnu"
+	],
+	"MOC_MACRO_NAMES" : 
+	[
+		"Q_OBJECT",
+		"Q_GADGET",
+		"Q_NAMESPACE",
+		"Q_NAMESPACE_EXPORT",
+		"Q_GADGET_EXPORT",
+		"Q_ENUM_NS"
+	],
+	"MOC_OPTIONS" : [],
+	"MOC_PATH_PREFIX" : false,
+	"MOC_PREDEFS_CMD" : 
+	[
+		"/usr/bin/c++",
+		"-std=c++20",
+		"-dM",
+		"-E",
+		"-c",
+		"/usr/share/cmake-3.31/Modules/CMakeCXXCompilerABI.cpp"
+	],
+	"MOC_PREDEFS_FILE" : "/home/hdd25/.deskflow/deskflow-deepin/build/src/lib/server/server_autogen/moc_predefs.h",
+	"MOC_RELAXED_MODE" : false,
+	"MOC_SKIP" : [],
+	"MULTI_CONFIG" : false,
+	"PARALLEL" : 2,
+	"PARSE_CACHE_FILE" : "/home/hdd25/.deskflow/deskflow-deepin/build/src/lib/server/CMakeFiles/server_autogen.dir/ParseCache.txt",
+	"QT_MOC_EXECUTABLE" : "/usr/lib/qt6/libexec/moc",
+	"QT_UIC_EXECUTABLE" : "/usr/lib/qt6/libexec/uic",
+	"QT_VERSION_MAJOR" : 6,
+	"QT_VERSION_MINOR" : 8,
+	"SETTINGS_FILE" : "/home/hdd25/.deskflow/deskflow-deepin/build/src/lib/server/CMakeFiles/server_autogen.dir/AutogenUsed.txt",
+	"SOURCES" : 
+	[
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/BaseClientProxy.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientListener.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy1_0.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy1_1.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy1_2.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy1_3.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy1_4.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy1_5.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy1_6.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy1_7.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy1_8.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxyUnknown.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/Config.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/InputFilter.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/PrimaryClient.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/Server.cpp",
+			"MU",
+			null
+		]
+	],
+	"UIC_OPTIONS" : [],
+	"UIC_SEARCH_PATHS" : [],
+	"UIC_SKIP" : [],
+	"UIC_UI_FILES" : [],
+	"USE_BETTER_GRAPH" : true,
+	"VERBOSITY" : 0
+}

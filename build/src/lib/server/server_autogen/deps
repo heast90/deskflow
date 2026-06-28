@@ -1,0 +1,37 @@
+server_autogen/timestamp: \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/BaseClientProxy.cpp \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/BaseClientProxy.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/CMakeLists.txt \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientListener.cpp \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientListener.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy.cpp \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy1_0.cpp \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy1_0.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy1_1.cpp \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy1_1.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy1_2.cpp \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy1_2.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy1_3.cpp \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy1_3.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy1_4.cpp \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy1_4.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy1_5.cpp \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy1_5.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy1_6.cpp \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy1_6.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy1_7.cpp \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy1_7.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy1_8.cpp \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxy1_8.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxyUnknown.cpp \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/ClientProxyUnknown.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/Config.cpp \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/Config.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/InputFilter.cpp \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/InputFilter.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/PrimaryClient.cpp \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/PrimaryClient.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/Server.cpp \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/server/Server.h \
+	/usr/bin/cmake

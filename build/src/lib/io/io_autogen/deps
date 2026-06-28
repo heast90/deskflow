@@ -1,0 +1,10 @@
+io_autogen/timestamp: \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/io/CMakeLists.txt \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/io/IOException.cpp \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/io/IOException.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/io/IStream.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/io/StreamBuffer.cpp \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/io/StreamBuffer.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/io/StreamFilter.cpp \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/io/StreamFilter.h \
+	/usr/bin/cmake

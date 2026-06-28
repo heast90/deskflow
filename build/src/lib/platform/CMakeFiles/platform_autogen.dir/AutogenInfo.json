@@ -1,0 +1,351 @@
+{
+	"BUILD_DIR" : "/home/hdd25/.deskflow/deskflow-deepin/build/src/lib/platform/platform_autogen",
+	"CMAKE_BINARY_DIR" : "/home/hdd25/.deskflow/deskflow-deepin/build",
+	"CMAKE_CURRENT_BINARY_DIR" : "/home/hdd25/.deskflow/deskflow-deepin/build/src/lib/platform",
+	"CMAKE_CURRENT_SOURCE_DIR" : "/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform",
+	"CMAKE_EXECUTABLE" : "/usr/bin/cmake",
+	"CMAKE_LIST_FILES" : 
+	[
+		"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/CMakeLists.txt",
+		"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/XWindowsConfig.h.in"
+	],
+	"CMAKE_SOURCE_DIR" : "/home/hdd25/.deskflow/deskflow-deepin",
+	"CROSS_CONFIG" : false,
+	"DEP_FILE" : "/home/hdd25/.deskflow/deskflow-deepin/build/src/lib/platform/platform_autogen/deps",
+	"DEP_FILE_RULE_NAME" : "platform_autogen/timestamp",
+	"HEADERS" : 
+	[
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/build/src/lib/platform/XWindowsConfig.h",
+			"MU",
+			"EJRQKI7XPS/moc_XWindowsConfig.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/EiEventQueueBuffer.h",
+			"MU",
+			"EWIEGA46WW/moc_EiEventQueueBuffer.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/EiKeyState.h",
+			"MU",
+			"EWIEGA46WW/moc_EiKeyState.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/EiScreen.h",
+			"MU",
+			"EWIEGA46WW/moc_EiScreen.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/PortalInputCapture.h",
+			"MU",
+			"EWIEGA46WW/moc_PortalInputCapture.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/PortalRemoteDesktop.h",
+			"MU",
+			"EWIEGA46WW/moc_PortalRemoteDesktop.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/WlClipboard.h",
+			"MU",
+			"EWIEGA46WW/moc_WlClipboard.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/WlClipboardCollection.h",
+			"MU",
+			"EWIEGA46WW/moc_WlClipboardCollection.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/XDGKeyUtil.h",
+			"MU",
+			"EWIEGA46WW/moc_XDGKeyUtil.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/XDGPortalRegistry.h",
+			"MU",
+			"EWIEGA46WW/moc_XDGPortalRegistry.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/XDGPowerManager.h",
+			"MU",
+			"EWIEGA46WW/moc_XDGPowerManager.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/XWindowsClipboard.h",
+			"MU",
+			"EWIEGA46WW/moc_XWindowsClipboard.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/XWindowsClipboardAnyBitmapConverter.h",
+			"MU",
+			"EWIEGA46WW/moc_XWindowsClipboardAnyBitmapConverter.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/XWindowsClipboardBMPConverter.h",
+			"MU",
+			"EWIEGA46WW/moc_XWindowsClipboardBMPConverter.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/XWindowsClipboardHTMLConverter.h",
+			"MU",
+			"EWIEGA46WW/moc_XWindowsClipboardHTMLConverter.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/XWindowsClipboardTextConverter.h",
+			"MU",
+			"EWIEGA46WW/moc_XWindowsClipboardTextConverter.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/XWindowsClipboardUCS2Converter.h",
+			"MU",
+			"EWIEGA46WW/moc_XWindowsClipboardUCS2Converter.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/XWindowsClipboardUTF8Converter.h",
+			"MU",
+			"EWIEGA46WW/moc_XWindowsClipboardUTF8Converter.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/XWindowsEventQueueBuffer.h",
+			"MU",
+			"EWIEGA46WW/moc_XWindowsEventQueueBuffer.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/XWindowsKeyState.h",
+			"MU",
+			"EWIEGA46WW/moc_XWindowsKeyState.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/XWindowsScreen.h",
+			"MU",
+			"EWIEGA46WW/moc_XWindowsScreen.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/XWindowsScreenSaver.h",
+			"MU",
+			"EWIEGA46WW/moc_XWindowsScreenSaver.cpp",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/XWindowsUtil.h",
+			"MU",
+			"EWIEGA46WW/moc_XWindowsUtil.cpp",
+			null
+		]
+	],
+	"HEADER_EXTENSIONS" : [ "h", "hh", "h++", "hm", "hpp", "hxx", "in", "txx" ],
+	"INCLUDE_DIR" : "/home/hdd25/.deskflow/deskflow-deepin/build/src/lib/platform/platform_autogen/include",
+	"MOC_COMPILATION_FILE" : "/home/hdd25/.deskflow/deskflow-deepin/build/src/lib/platform/platform_autogen/mocs_compilation.cpp",
+	"MOC_DEFINITIONS" : 
+	[
+		"HAVE_FORMAT",
+		"HAVE_LIBPORTAL_INPUTCAPTURE",
+		"NDEBUG",
+		"QT_CORE_LIB",
+		"QT_DBUS_LIB",
+		"QT_NETWORK_LIB",
+		"QT_NO_DEBUG",
+		"QT_NO_KEYWORDS",
+		"SYSAPI_UNIX=1",
+		"WINAPI_LIBEI",
+		"WINAPI_LIBPORTAL",
+		"WINAPI_XWINDOWS=1"
+	],
+	"MOC_DEPEND_FILTERS" : 
+	[
+		[
+			"Q_PLUGIN_METADATA",
+			"[\n][ \t]*Q_PLUGIN_METADATA[ \t]*\\([^\\)]*FILE[ \t]*\"([^\"]+)\""
+		]
+	],
+	"MOC_INCLUDES" : 
+	[
+		"/usr/include/glib-2.0",
+		"/usr/lib/x86_64-linux-gnu/glib-2.0/include",
+		"/usr/include/sysprof-6",
+		"/home/hdd25/.deskflow/deskflow-deepin/src/lib",
+		"/home/hdd25/.deskflow/deskflow-deepin/build/src/lib",
+		"/usr/include/libei-1.0",
+		"/usr/include/libmount",
+		"/usr/include/blkid",
+		"/usr/include/gio-unix-2.0",
+		"/usr/include/x86_64-linux-gnu/qt6/QtCore",
+		"/usr/include/x86_64-linux-gnu/qt6",
+		"/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++",
+		"/usr/include/x86_64-linux-gnu/qt6/QtNetwork",
+		"/usr/include/x86_64-linux-gnu/qt6/QtDBus",
+		"/usr/include",
+		"/usr/local/include",
+		"/usr/include/c++/13",
+		"/usr/include/x86_64-linux-gnu/c++/13",
+		"/usr/include/c++/13/backward",
+		"/usr/lib/gcc/x86_64-linux-gnu/13/include",
+		"/usr/include/x86_64-linux-gnu"
+	],
+	"MOC_MACRO_NAMES" : 
+	[
+		"Q_OBJECT",
+		"Q_GADGET",
+		"Q_NAMESPACE",
+		"Q_NAMESPACE_EXPORT",
+		"Q_GADGET_EXPORT",
+		"Q_ENUM_NS"
+	],
+	"MOC_OPTIONS" : [],
+	"MOC_PATH_PREFIX" : false,
+	"MOC_PREDEFS_CMD" : 
+	[
+		"/usr/bin/c++",
+		"-std=c++20",
+		"-dM",
+		"-E",
+		"-c",
+		"/usr/share/cmake-3.31/Modules/CMakeCXXCompilerABI.cpp"
+	],
+	"MOC_PREDEFS_FILE" : "/home/hdd25/.deskflow/deskflow-deepin/build/src/lib/platform/platform_autogen/moc_predefs.h",
+	"MOC_RELAXED_MODE" : false,
+	"MOC_SKIP" : [],
+	"MULTI_CONFIG" : false,
+	"PARALLEL" : 2,
+	"PARSE_CACHE_FILE" : "/home/hdd25/.deskflow/deskflow-deepin/build/src/lib/platform/CMakeFiles/platform_autogen.dir/ParseCache.txt",
+	"QT_MOC_EXECUTABLE" : "/usr/lib/qt6/libexec/moc",
+	"QT_UIC_EXECUTABLE" : "/usr/lib/qt6/libexec/uic",
+	"QT_VERSION_MAJOR" : 6,
+	"QT_VERSION_MINOR" : 8,
+	"SETTINGS_FILE" : "/home/hdd25/.deskflow/deskflow-deepin/build/src/lib/platform/CMakeFiles/platform_autogen.dir/AutogenUsed.txt",
+	"SOURCES" : 
+	[
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/EiEventQueueBuffer.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/EiKeyState.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/EiScreen.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/PortalInputCapture.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/PortalRemoteDesktop.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/WlClipboard.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/WlClipboardCollection.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/XDGKeyUtil.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/XDGPowerManager.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/XWindowsClipboard.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/XWindowsClipboardAnyBitmapConverter.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/XWindowsClipboardBMPConverter.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/XWindowsClipboardHTMLConverter.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/XWindowsClipboardTextConverter.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/XWindowsClipboardUCS2Converter.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/XWindowsClipboardUTF8Converter.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/XWindowsEventQueueBuffer.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/XWindowsKeyState.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/XWindowsScreen.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/XWindowsScreenSaver.cpp",
+			"MU",
+			null
+		],
+		[
+			"/home/hdd25/.deskflow/deskflow-deepin/src/lib/platform/XWindowsUtil.cpp",
+			"MU",
+			null
+		]
+	],
+	"UIC_OPTIONS" : [],
+	"UIC_SEARCH_PATHS" : [],
+	"UIC_SKIP" : [],
+	"UIC_UI_FILES" : [],
+	"USE_BETTER_GRAPH" : true,
+	"VERBOSITY" : 0
+}

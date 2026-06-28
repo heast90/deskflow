@@ -335,6 +335,7 @@ bool MSWindowsScreen::setClipboard(ClipboardID, const IClipboard *src)
 
 void MSWindowsScreen::checkClipboards()
 {
+  LOG_DEBUG("[CLIP-CU-MS-019] checkClipboards() -- polling ownership, m_ownClipboard=%d, isOwnedByDeskflow=%d", m_ownClipboard, MSWindowsClipboard::isOwnedByDeskflow());
   // if we think we own the clipboard but we don't then somebody
   // grabbed the clipboard on this screen without us knowing.
   // tell the server that this screen grabbed the clipboard.
@@ -1336,18 +1337,24 @@ bool MSWindowsScreen::onDisplayChange()
 
 void MSWindowsScreen::onClipboardChange()
 {
-  // now notify client that somebody changed the clipboard (unless
-  // we're the owner).
-  if (!MSWindowsClipboard::isOwnedByDeskflow()) {
+  bool ownedByDeskflow = MSWindowsClipboard::isOwnedByDeskflow();
+  LOG_DEBUG("[CLIP-CU-MS-014] onClipboardChange() -- entry m_ownClipboard=%d, isOwnedByDeskflow=%d", m_ownClipboard, ownedByDeskflow);
+  if (!ownedByDeskflow) {
     if (m_ownClipboard) {
-      LOG_DEBUG("clipboard changed: lost ownership");
+      LOG_DEBUG("[CLIP-CU-MS-015] clipboard changed: lost ownership, marking m_ownClipboard=false");
       m_ownClipboard = false;
+      sendClipboardEvent(EventTypes::ClipboardGrabbed, kClipboardClipboard);
+      sendClipboardEvent(EventTypes::ClipboardGrabbed, kClipboardSelection);
+    } else {
+      LOG_DEBUG("[CLIP-CU-MS-018] external clipboard change detected, !m_ownClipboard, sending grab");
       sendClipboardEvent(EventTypes::ClipboardGrabbed, kClipboardClipboard);
       sendClipboardEvent(EventTypes::ClipboardGrabbed, kClipboardSelection);
     }
   } else if (!m_ownClipboard) {
-    LOG_DEBUG("clipboard changed: %s owned", kAppId);
+    LOG_DEBUG("[CLIP-CU-MS-016] onClipboardChange() -- deskflow owns clipboard, isOwnedByDeskflow=%d, m_ownClipboard=%d, setting=true", ownedByDeskflow, m_ownClipboard);
     m_ownClipboard = true;
+  } else {
+    LOG_DEBUG("[CLIP-CU-MS-017] onClipboardChange() -- deskflow owns && m_ownClipboard already true, isOwnedByDeskflow=%d, m_ownClipboard=%d", ownedByDeskflow, m_ownClipboard);
   }
 }
 

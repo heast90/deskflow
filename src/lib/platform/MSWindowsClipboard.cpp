@@ -179,7 +179,9 @@ std::string MSWindowsClipboard::get(Format format) const
   }
 
   // convert
-  return converter->toIClipboard(win32Data);
+  auto result = converter->toIClipboard(win32Data);
+  LOG_DEBUG("[CLIP-CU-MC-005] MSWindowsClipboard.cpp:213 get() -- format=%d win32Format=0x%x dataSize=%zu text='%s'", format, converter->getWin32Format(), result.size(), result.c_str());
+  return result;
 }
 
 void MSWindowsClipboard::clearConverters()

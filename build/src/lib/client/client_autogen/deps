@@ -1,0 +1,7 @@
+client_autogen/timestamp: \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/client/CMakeLists.txt \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/client/Client.cpp \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/client/Client.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/client/ServerProxy.cpp \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/client/ServerProxy.h \
+	/usr/bin/cmake

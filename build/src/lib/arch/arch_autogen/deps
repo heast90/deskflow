@@ -1,0 +1,19 @@
+arch_autogen/timestamp: \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/arch/Arch.cpp \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/arch/Arch.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/arch/ArchDaemonNone.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/arch/ArchException.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/arch/CMakeLists.txt \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/arch/IArchDaemon.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/arch/IArchLog.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/arch/IArchMultithread.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/arch/IArchNetwork.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/arch/unix/ArchLogUnix.cpp \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/arch/unix/ArchLogUnix.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/arch/unix/ArchMultithreadPosix.cpp \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/arch/unix/ArchMultithreadPosix.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/arch/unix/ArchNetworkBSD.cpp \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/arch/unix/ArchNetworkBSD.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/arch/unix/XArchUnix.cpp \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/arch/unix/XArchUnix.h \
+	/usr/bin/cmake

@@ -1,0 +1,36 @@
+base_autogen/timestamp: \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/base/BaseException.cpp \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/base/BaseException.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/base/CMakeLists.txt \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/base/DirectionTypes.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/base/Event.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/base/EventQueue.cpp \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/base/EventQueue.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/base/EventQueueTimer.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/base/EventTypes.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/base/FinalAction.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/base/FunctionEventJob.cpp \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/base/FunctionEventJob.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/base/FunctionJob.cpp \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/base/FunctionJob.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/base/IEventQueue.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/base/IEventQueueBuffer.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/base/IJob.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/base/ILogOutputter.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/base/Log.cpp \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/base/Log.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/base/LogLevel.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/base/LogOutputters.cpp \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/base/LogOutputters.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/base/NetworkProtocol.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/base/PriorityQueue.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/base/SimpleEventQueueBuffer.cpp \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/base/SimpleEventQueueBuffer.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/base/Stopwatch.cpp \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/base/Stopwatch.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/base/String.cpp \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/base/String.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/base/TMethodJob.h \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/base/Unicode.cpp \
+	/home/hdd25/.deskflow/deskflow-deepin/src/lib/base/Unicode.h \
+	/usr/bin/cmake

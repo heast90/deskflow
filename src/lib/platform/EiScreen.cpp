@@ -165,6 +165,7 @@ void *EiScreen::getEventTarget() const
 
 bool EiScreen::getClipboard(ClipboardID id, IClipboard *clipboard) const
 {
+  LOG_DEBUG("[CLIP-CU-ES-001] EiScreen.cpp:166 getClipboard() -- reading local clipboard, id=%d", id);
   if (!m_clipboard || !m_clipboard->isAvailable()) {
     return false;
   }
@@ -397,6 +398,7 @@ void EiScreen::leave()
 
 bool EiScreen::setClipboard(ClipboardID id, const IClipboard *clipboard)
 {
+  LOG_DEBUG("[CLIP-CU-ES-002] EiScreen.cpp:398 setClipboard() -- writing to local screen, id=%d", id);
   if (!clipboard || !m_clipboard || !m_clipboard->isAvailable()) {
     return false;
   }
@@ -411,15 +413,17 @@ bool EiScreen::setClipboard(ClipboardID id, const IClipboard *clipboard)
 
 void EiScreen::checkClipboards()
 {
+  LOG_DEBUG("[CLIP-CU-ES-006] EiScreen.cpp:412 checkClipboards() -- checking for clipboard changes");
   // do nothing, we're always up to date
   if (!m_clipboard || !m_clipboard->isAvailable()) {
     return;
   }
 
   if (m_clipboard->hasChanged()) {
+    LOG_DEBUG("[CLIP-CU-ES-007] EiScreen.cpp:419 checkClipboards() -- clipboard changed, sending events");
     // Send clipboard change events for all clipboard types
     for (ClipboardID id = 0; id < kClipboardEnd; ++id) {
-      sendClipboardEvent(EventTypes::ClipboardChanged, id);
+      sendClipboardEvent(EventTypes::ClipboardGrabbed, id);
     }
     m_clipboard->resetChanged();
   }

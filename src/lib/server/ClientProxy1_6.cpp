@@ -28,6 +28,7 @@ ClientProxy1_6::ClientProxy1_6(const std::string &name, deskflow::IStream *strea
 
 void ClientProxy1_6::setClipboard(ClipboardID id, const IClipboard *clipboard)
 {
+  LOG_DEBUG("[CLIP-CU-CP-001] ClientProxy1_6.cpp:29 setClipboard() -- server pushing data to client, id=%d, dirty=%d", id, m_clipboard[id].m_dirty);
   // ignore if this clipboard is already clean
   if (m_clipboard[id].m_dirty) {
     // this clipboard is now clean
@@ -37,7 +38,7 @@ void ClientProxy1_6::setClipboard(ClipboardID id, const IClipboard *clipboard)
     std::string data = m_clipboard[id].m_clipboard.marshall();
 
     size_t size = data.size();
-    LOG_DEBUG("sending clipboard %d to \"%s\"", id, getName().c_str());
+    LOG_DEBUG("[CLIP-CU-CP-002] ClientProxy1_6.cpp:setClipboard() -- sending clipboard data, id=%d target=%s marshalled_size=%zu", id, getName().c_str(), data.size());
 
     StreamChunker::sendClipboard(data, size, id, 0, m_events, this);
   }
@@ -49,6 +50,8 @@ bool ClientProxy1_6::recvClipboard()
   static std::string dataCached;
   ClipboardID id;
   uint32_t seq;
+
+  LOG_DEBUG("[CLIP-CU-CP-005] ClientProxy1_6.cpp:46 recvClipboard() -- receiving clipboard from client");
 
   if (auto r = ClipboardChunk::assemble(getStream(), dataCached, id, seq); r == TransferState::Started) {
     size_t size = ClipboardChunk::getExpectedSize();
@@ -66,6 +69,7 @@ bool ClientProxy1_6::recvClipboard()
     auto *info = new ClipboardInfo;
     info->m_id = id;
     info->m_sequenceNumber = seq;
+    LOG_DEBUG("[CLIP-CU-CP-008] ClientProxy1_6.cpp:69 recvClipboard() -- posting ClipboardChanged event to Server, id=%d seq=%u", id, seq);
     m_events->addEvent(Event(EventTypes::ClipboardChanged, getEventTarget(), info));
   }
 

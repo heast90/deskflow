@@ -23,11 +23,13 @@ WlClipboardCollection::~WlClipboardCollection()
 
 bool WlClipboardCollection::isAvailable() const
 {
+  LOG_DEBUG("[CLIP-CU-WL-001] WlClipboardCollection.cpp:24 isAvailable() -- returning %d", m_available);
   return m_available;
 }
 
 IClipboard *WlClipboardCollection::getClipboard(ClipboardID id) const
 {
+  LOG_DEBUG("[CLIP-CU-WL-002] WlClipboardCollection.cpp:29 getClipboard() -- id=%d", id);
   if (!m_available || id >= m_clipboards.size()) {
     return nullptr;
   }
@@ -37,6 +39,7 @@ IClipboard *WlClipboardCollection::getClipboard(ClipboardID id) const
 
 bool WlClipboardCollection::hasChanged() const
 {
+  LOG_DEBUG("[CLIP-CU-WL-003] WlClipboardCollection.cpp:38 hasChanged() -- checking all clipboards");
   if (!m_available) {
     return false;
   }
@@ -52,6 +55,7 @@ bool WlClipboardCollection::hasChanged() const
 
 void WlClipboardCollection::startMonitoring()
 {
+  LOG_DEBUG("[CLIP-CU-WL-004] WlClipboardCollection.cpp:53 startMonitoring() -- starting");
   if (!m_available || m_monitoring) {
     return;
   }
@@ -67,6 +71,7 @@ void WlClipboardCollection::startMonitoring()
 
 void WlClipboardCollection::stopMonitoring()
 {
+  LOG_DEBUG("[CLIP-CU-WL-005] WlClipboardCollection.cpp:68 stopMonitoring() -- stopping");
   if (!m_available || !m_monitoring) {
     return;
   }

@@ -18,8 +18,10 @@
 
 #include <QObject>
 #include <QString>
+#include <QTimer>
+#include <vector>
+#include <utility>
 
-class QProcess;
 //! Wayland clipboard implementation using wl-copy/wl-paste
 /*!
 This class implements clipboard functionality for Wayland environments
@@ -75,7 +77,7 @@ private:
   Format mimeTypeToFormat(const QString &mimeType) const;
 
   //! Get available MIME types from clipboard
-  QStringList getAvailableMimeTypes() const;
+  QStringList getAvailableMimeTypes(int timeoutMs = 2000) const;
 
   //! Monitor clipboard changes in background thread
   void monitorClipboard();
@@ -114,6 +116,12 @@ private:
   // Clipboard selection type (true = clipboard, false = primary)
   bool m_useClipboard;
 
-  // Hold a ref to running wl-copy processes
-  QList<QProcess *> m_runningWlCopies;
+  //! Reap finished wl-copy children (called periodically from timer)
+  void reapDeadWlCopies();
+
+  // Hold a ref to running wl-copy PIDs (pid, finished flag)
+  std::vector<std::pair<pid_t, bool>> m_runningWlCopies;
+
+  // Timer for periodic child reaping
+  QTimer *m_reaperTimer = nullptr;
 };
