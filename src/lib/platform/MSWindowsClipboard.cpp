@@ -4,21 +4,16 @@
  * SPDX-FileCopyrightText: (C) 2002 Chris Schoeneman
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
  */
-
 #include "platform/MSWindowsClipboard.h"
-
 #include "base/Log.h"
 #include "platform/MSWindowsClipboardBitmapConverter.h"
 #include "platform/MSWindowsClipboardFacade.h"
 #include "platform/MSWindowsClipboardHTMLConverter.h"
 #include "platform/MSWindowsClipboardUTF16Converter.h"
-
 //
 // MSWindowsClipboard
 //
-
 UINT MSWindowsClipboard::s_ownershipFormat = 0;
-
 MSWindowsClipboard::MSWindowsClipboard(HWND window)
     : m_window(window),
       m_time(0),
@@ -30,29 +25,24 @@ MSWindowsClipboard::MSWindowsClipboard(HWND window)
   m_converters.push_back(new MSWindowsClipboardBitmapConverter);
   m_converters.push_back(new MSWindowsClipboardHTMLConverter);
 }
-
 MSWindowsClipboard::~MSWindowsClipboard()
 {
   clearConverters();
-
   // dependency injection causes confusion over ownership, so we need
   // logic to decide whether or not we delete the facade. there must
   // be a more elegant way of doing this.
   if (m_deleteFacade)
     delete m_facade;
 }
-
 void MSWindowsClipboard::setFacade(IMSWindowsClipboardFacade &facade)
 {
   delete m_facade;
   m_facade = &facade;
   m_deleteFacade = false;
 }
-
 bool MSWindowsClipboard::emptyUnowned()
 {
   LOG_DEBUG("empty clipboard");
-
   // empty the clipboard (and take ownership)
   if (!EmptyClipboard()) {
     // unable to cause this in integ tests, but this error has never
@@ -60,16 +50,14 @@ bool MSWindowsClipboard::emptyUnowned()
     LOG_WARN("failed to grab clipboard");
     return false;
   }
-
   return true;
 }
-
 bool MSWindowsClipboard::empty()
 {
+  LOG_DEBUG("[CLIP-WS-MC-003] MSWindowsClipboard.cpp:67 empty() -- emptying clipboard");
   if (!emptyUnowned()) {
     return false;
   }
-
   // mark clipboard as being owned by deskflow
   HGLOBAL data = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, 1);
   if (nullptr == SetClipboardData(getOwnershipFormat(), data)) {
@@ -77,12 +65,11 @@ bool MSWindowsClipboard::empty()
     GlobalFree(data);
     return false;
   }
-
   return true;
 }
-
 void MSWindowsClipboard::add(Format format, const std::string &data)
 {
+  LOG_DEBUG("[CLIP-WS-MC-004] MSWindowsClipboard.cpp:84 add() -- adding data to clipboard, format=%d size=%zu", format, data.size());
   // exit early if there is no data to prevent spurious "failed to convert clipboard data" errors
   if (data.empty()) {
     LOG_DEBUG("not adding 0 bytes to clipboard format: %d", format);
@@ -92,7 +79,6 @@ void MSWindowsClipboard::add(Format format, const std::string &data)
   // convert data to win32 form
   for (ConverterList::const_iterator index = m_converters.begin(); index != m_converters.end(); ++index) {
     IMSWindowsClipboardConverter *converter = *index;
-
     // skip converters for other formats
     if (converter->getFormat() == format) {
       HANDLE win32Data = converter->fromIClipboard(data);
@@ -106,37 +92,31 @@ void MSWindowsClipboard::add(Format format, const std::string &data)
       }
     }
   }
-
   if (!isSucceeded) {
     LOG_DEBUG("missed clipboard data convert for format: %d", format);
   }
 }
-
 bool MSWindowsClipboard::open(Time time) const
 {
+  LOG_DEBUG("[CLIP-WS-MC-001] MSWindowsClipboard.cpp:115 open() -- opening Win32 clipboard, time=%u", time);
   LOG_DEBUG("open clipboard");
-
   if (!OpenClipboard(m_window)) {
     LOG_WARN("failed to open clipboard: %d", GetLastError());
     return false;
   }
-
   m_time = time;
-
   return true;
 }
-
 void MSWindowsClipboard::close() const
 {
+  LOG_DEBUG("[CLIP-WS-MC-002] MSWindowsClipboard.cpp:129 close() -- closing Win32 clipboard, m_time=%u", m_time);
   LOG_DEBUG("close clipboard");
   CloseClipboard();
 }
-
 IClipboard::Time MSWindowsClipboard::getTime() const
 {
   return m_time;
 }
-
 bool MSWindowsClipboard::has(Format format) const
 {
   for (ConverterList::const_iterator index = m_converters.begin(); index != m_converters.end(); ++index) {
@@ -149,26 +129,22 @@ bool MSWindowsClipboard::has(Format format) const
   }
   return false;
 }
-
 std::string MSWindowsClipboard::get(Format format) const
 {
   // find the converter for the first clipboard format we can handle
   IMSWindowsClipboardConverter *converter = nullptr;
   for (ConverterList::const_iterator index = m_converters.begin(); index != m_converters.end(); ++index) {
-
     converter = *index;
     if (converter->getFormat() == format) {
       break;
     }
     converter = nullptr;
   }
-
   // if no converter then we don't recognize any formats
   if (converter == nullptr) {
     LOG_WARN("no converter for format %d", format);
     return std::string();
   }
-
   // get a handle to the clipboard data
   HANDLE win32Data = GetClipboardData(converter->getWin32Format());
   if (win32Data == nullptr) {
@@ -177,11 +153,11 @@ std::string MSWindowsClipboard::get(Format format) const
     // cannot cause using public functions.
     return std::string();
   }
-
   // convert
-  return converter->toIClipboard(win32Data);
+  auto result = converter->toIClipboard(win32Data);
+  LOG_DEBUG("[CLIP-WS-MC-005] MSWindowsClipboard.cpp:213 get() -- format=%d win32Format=0x%x dataSize=%zu text='%s'", format, converter->getWin32Format(), result.size(), result.c_str());
+  return result;
 }
-
 void MSWindowsClipboard::clearConverters()
 {
   for (ConverterList::iterator index = m_converters.begin(); index != m_converters.end(); ++index) {
@@ -189,23 +165,21 @@ void MSWindowsClipboard::clearConverters()
   }
   m_converters.clear();
 }
-
 bool MSWindowsClipboard::isOwnedByDeskflow()
 {
+  LOG_DEBUG("[CLIP-WS-MC-007] MSWindowsClipboard.cpp:193 isOwnedByDeskflow() -- checking clipboard ownership");
   // create ownership format if we haven't yet
   if (s_ownershipFormat == 0) {
     s_ownershipFormat = RegisterClipboardFormat(TEXT("Deskflow Ownership"));
   }
   return (IsClipboardFormatAvailable(getOwnershipFormat()) != 0);
 }
-
 UINT MSWindowsClipboard::getOwnershipFormat()
 {
   // create ownership format if we haven't yet
   if (s_ownershipFormat == 0) {
     s_ownershipFormat = RegisterClipboardFormat(TEXT("Deskflow Ownership"));
   }
-
   // return the format
   return s_ownershipFormat;
 }

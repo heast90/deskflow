@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Deskflow -- mouse and keyboard sharing utility
  * SPDX-FileCopyrightText: (C) 2025 Deskflow Developers
  * SPDX-FileCopyrightText: (C) 2012 Symless Ltd.
@@ -400,6 +400,7 @@ private:
   size_t m_maximumClipboardSize = INT_MAX;
   ClientListener *m_clientListener = nullptr;
   Stopwatch m_switchTwoTapTimer;
+  Stopwatch m_switchDebounceTimer;
 
   // Name of screen broadcasting the keyboard events
   std::string m_keyboardBroadcastingScreens;

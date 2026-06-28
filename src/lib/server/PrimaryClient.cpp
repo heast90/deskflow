@@ -8,6 +8,7 @@
 #include "server/PrimaryClient.h"
 
 #include "base/Log.h"
+#include "deskflow/IClipboard.h"
 #include "deskflow/Screen.h"
 //
 // PrimaryClient
@@ -76,7 +77,20 @@ void *PrimaryClient::getEventTarget() const
 
 bool PrimaryClient::getClipboard(ClipboardID id, IClipboard *clipboard) const
 {
-  return m_screen->getClipboard(id, clipboard);
+  LOG_DEBUG("[CLIP-WS-PC-001] PrimaryClient.cpp:77 getClipboard() -- reading from primary screen, id=%d", id);
+  bool result = m_screen->getClipboard(id, clipboard);
+  LOG_DEBUG("[CLIP-WS-PC-003a] getClipboard() -- result=%d, clipboard=%d", result, !!clipboard);
+  if (result && clipboard) {
+    for (int f = 0; f < (int)IClipboard::Format::TotalFormats; f++) {
+      auto eFmt = (IClipboard::Format)f;
+      bool has = clipboard->has(eFmt);
+      if (has) {
+        std::string txt = clipboard->get(eFmt);
+        LOG_DEBUG("[CLIP-WS-PC-003b] getClipboard() -- format=%d hasData size=%zu text='%s'", f, txt.size(), txt.c_str());
+      }
+    }
+  }
+  return result;
 }
 
 void PrimaryClient::getShape(int32_t &x, int32_t &y, int32_t &width, int32_t &height) const
@@ -115,11 +129,13 @@ bool PrimaryClient::leave()
 
 void PrimaryClient::setClipboard(ClipboardID id, const IClipboard *clipboard)
 {
+  LOG_DEBUG("[CLIP-WS-PC-002] PrimaryClient.cpp:116 setClipboard() -- writing to primary screen, id=%d, dirty[0]=%d dirty[1]=%d", id, m_clipboardDirty[0], m_clipboardDirty[1]);
   // ignore if this clipboard is already clean
   if (m_clipboardDirty[id]) {
     // this clipboard is now clean
     m_clipboardDirty[id] = false;
 
+    LOG_DEBUG("[CLIP-WS-PC-004] PrimaryClient.cpp:124 setClipboard() -- calling m_screen->setClipboard(), clipboard=%p", (void*)clipboard);
     // set clipboard
     m_screen->setClipboard(id, clipboard);
   }
@@ -127,6 +143,7 @@ void PrimaryClient::setClipboard(ClipboardID id, const IClipboard *clipboard)
 
 void PrimaryClient::grabClipboard(ClipboardID id)
 {
+  LOG_DEBUG("[CLIP-WS-PC-005] PrimaryClient.cpp:128 grabClipboard() -- primary clipboard invalidated, id=%d", id);
   // grab clipboard
   m_screen->grabClipboard(id);
 
@@ -225,3 +242,6 @@ void PrimaryClient::setOptions(const OptionsList &options)
 {
   m_screen->setOptions(options);
 }
+// force rebuild
+
+

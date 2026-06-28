@@ -414,6 +414,16 @@ void Server::switchScreen(BaseClientProxy *dst, int32_t x, int32_t y, bool forSc
   m_xDelta2 = 0;
   m_yDelta2 = 0;
 
+  // P0: Debounce rapid switches to prevent oscillation (e.g. cursor at jump zone edge
+  // triggering immediate re-switch after entering a screen)
+  if (dst != m_active && m_switchDebounceTimer.getTime() < 0.5) {
+    LOG_DEBUG("[CLIP-WS-S-DEBOUNCE] ignoring rapid switch (%.0fms) from %s to %s",
+               m_switchDebounceTimer.getTime() * 1000.0,
+               getName(m_active).c_str(), getName(dst).c_str());
+    return;
+  }
+  m_switchDebounceTimer.reset();
+
   // wrapping means leaving the active screen and entering it again.
   // since that's a waste of time we skip that and just warp the
   // mouse.
@@ -428,6 +438,7 @@ void Server::switchScreen(BaseClientProxy *dst, int32_t x, int32_t y, bool forSc
     // update the primary client's clipboards if we're leaving the
     // primary screen.
     if (m_active == m_primaryClient && m_enableClipboard) {
+      LOG_DEBUG("[CLIP-WS-S-016] Server.cpp:switchScreen() -- leaving primary, push clipboard, active=%s", m_active ? m_active->getName().c_str() : "null");
       for (ClipboardID id = 0; id < kClipboardEnd; ++id) {
         const ClipboardInfo &clipboard = m_clipboards[id];
         if (clipboard.m_clipboardOwner == getName(m_primaryClient)) {
@@ -457,6 +468,7 @@ void Server::switchScreen(BaseClientProxy *dst, int32_t x, int32_t y, bool forSc
     // enter new screen
     m_active->enter(x, y, m_seqNum, m_primaryClient->getToggleMask(), forScreensaver);
 
+    LOG_DEBUG("[CLIP-WS-S-017] Server.cpp:switchScreen() -- entering new screen, sending clipboard, active=%s", m_active ? m_active->getName().c_str() : "null");
     if (m_enableClipboard) {
       // send the clipboard data to new active screen
       for (ClipboardID id = 0; id < kClipboardEnd; ++id) {
@@ -1153,6 +1165,7 @@ void Server::handleShapeChanged(BaseClientProxy *client)
 
 void Server::handleClipboardGrabbed(const Event &event, BaseClientProxy *grabber)
 {
+  LOG_DEBUG("[CLIP-WS-S-001] Server.cpp:1154 handleClipboardGrabbed() -- event received, grabber=%s", getName(grabber).c_str());
   if (!m_enableClipboard || (m_maximumClipboardSize == 0)) {
     return;
   }
@@ -1171,6 +1184,7 @@ void Server::handleClipboardGrabbed(const Event &event, BaseClientProxy *grabber
     return;
   }
 
+  LOG_DEBUG("[CLIP-WS-S-004] handleClipboardGrabbed() -- setting new owner, grabber=%s id=%d", getName(grabber).c_str(), info->m_id);
   // mark screen as owning clipboard
   LOG_INFO(
       "screen \"%s\" grabbed clipboard %d from \"%s\"", getName(grabber).c_str(), info->m_id,
@@ -1179,6 +1193,7 @@ void Server::handleClipboardGrabbed(const Event &event, BaseClientProxy *grabber
   clipboard.m_clipboardOwner = getName(grabber);
   clipboard.m_clipboardSeqNum = info->m_sequenceNumber;
 
+  LOG_DEBUG("[CLIP-WS-S-005] handleClipboardGrabbed() -- clearing clipboard cache, id=%d", info->m_id);
   // clear the clipboard data (since it's not known at this point)
   if (clipboard.m_clipboard.open(0)) {
     clipboard.m_clipboard.empty();
@@ -1186,6 +1201,7 @@ void Server::handleClipboardGrabbed(const Event &event, BaseClientProxy *grabber
   }
   clipboard.m_clipboardData = clipboard.m_clipboard.marshall();
 
+  LOG_DEBUG("[CLIP-WS-S-006] handleClipboardGrabbed() -- notifying all clients of grab, id=%d", info->m_id);
   // tell all other screens to take ownership of clipboard.  tell the
   // grabber that it's clipboard isn't dirty.
   for (auto index = m_clients.begin(); index != m_clients.end(); ++index) {
@@ -1197,8 +1213,8 @@ void Server::handleClipboardGrabbed(const Event &event, BaseClientProxy *grabber
     }
   }
 
-  if (grabber == m_primaryClient && m_active != m_primaryClient) {
-    LOG_INFO("clipboard grabbed while active screen was changed, resending clipboard data");
+  if (grabber == m_primaryClient) {
+    LOG_DEBUG("[CLIP-WS-S-007] handleClipboardGrabbed() -- primary grabbed, re-reading clipboard data");
     for (ClipboardID id = 0; id < kClipboardEnd; ++id) {
       onClipboardChanged(m_primaryClient, id, m_clipboards[id].m_clipboardSeqNum);
     }
@@ -1207,6 +1223,7 @@ void Server::handleClipboardGrabbed(const Event &event, BaseClientProxy *grabber
 
 void Server::handleClipboardChanged(const Event &event, BaseClientProxy *client)
 {
+  LOG_DEBUG("[CLIP-WS-S-008] Server.cpp:1208 handleClipboardChanged() -- event received, client=%s", getName(client).c_str());
   // ignore events from unknown clients
   if (!m_clientSet.contains(client)) {
     return;
@@ -1426,6 +1443,7 @@ void Server::handleLockCursorToScreenEvent(const Event &event)
 
 void Server::onClipboardChanged(const BaseClientProxy *sender, ClipboardID id, uint32_t seqNum)
 {
+  LOG_DEBUG("[CLIP-WS-S-009] Server.cpp:1427 onClipboardChanged() -- sender=%s id=%d seq=%u", getName(sender).c_str(), id, seqNum);
   ClipboardInfo &clipboard = m_clipboards[id];
 
   // ignore update if sequence number is old
@@ -1437,8 +1455,14 @@ void Server::onClipboardChanged(const BaseClientProxy *sender, ClipboardID id, u
   // should be the expected client
   assert(sender == m_clients.find(clipboard.m_clipboardOwner)->second);
 
+  LOG_DEBUG("[CLIP-WS-S-011] Server.cpp:onClipboardChanged() -- reading clipboard data from sender, id=%d", id);
   // get data
   sender->getClipboard(id, &clipboard.m_clipboard);
+
+  if (clipboard.m_clipboard.has(IClipboard::Format::Text)) {
+    std::string text = clipboard.m_clipboard.get(IClipboard::Format::Text);
+    LOG_DEBUG("[CLIP-WS-S-012] Server.cpp:onClipboardChanged() -- text content='%s' (len=%zu)", text.c_str(), text.size());
+  }
 
   std::string data = clipboard.m_clipboard.marshall();
   if (data.size() > m_maximumClipboardSize * 1024) {
@@ -1455,6 +1479,7 @@ void Server::onClipboardChanged(const BaseClientProxy *sender, ClipboardID id, u
     return;
   }
 
+  LOG_DEBUG("[CLIP-WS-S-014] Server.cpp:onClipboardChanged() -- new data, updating cache, size=%zu", data.size());
   // got new data
   LOG_INFO("screen \"%s\" updated clipboard %d", clipboard.m_clipboardOwner.c_str(), id);
   clipboard.m_clipboardData = data;
@@ -1465,6 +1490,7 @@ void Server::onClipboardChanged(const BaseClientProxy *sender, ClipboardID id, u
     client->setClipboardDirty(id, client != sender);
   }
 
+  LOG_DEBUG("[CLIP-WS-S-015] Server.cpp:onClipboardChanged() -- pushing to active screen, id=%d, active=%s", id, m_active ? m_active->getName().c_str() : "null");
   // send the new clipboard to the active screen
   m_active->setClipboard(id, &clipboard.m_clipboard);
 }
@@ -2052,3 +2078,4 @@ void Server::forceLeaveClient(const BaseClientProxy *client)
   // tell primary client about the active sides
   m_primaryClient->reconfigure(getActivePrimarySides());
 }
+

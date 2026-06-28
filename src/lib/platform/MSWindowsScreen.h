@@ -302,7 +302,7 @@ private:
   // owner and as a link in the clipboard viewer chain.
   HWND m_window = nullptr;
   DWORD m_clipboardSequenceNumber = 0;
-  bool m_ownClipboard = false;
+  bool m_ownClipboard = true;
 
   // one desk per desktop and a cond var to communicate with it
   MSWindowsDesks *m_desks = nullptr;
@@ -337,3 +337,4 @@ private:
   PrimaryKeyDownList m_primaryKeyDownList;
   MSWindowsPowerManager m_powerManager;
 };
+
